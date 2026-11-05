@@ -4,10 +4,11 @@ import MathDisplay from "./MathDisplay";
 
 export interface TimelineEntry {
   id: string;
-  type: "math" | "text";
+  type: "math" | "text" | "graph";
   latex: string;
   description: string;
   imageUrl?: string;
+  data?: { x: number; y: number }[];
   order?: number;
   createdAt: number;
 }
@@ -39,7 +40,7 @@ export default function Timeline({ entries }: Props) {
             {i < entries.length - 1 && <div className="w-0.5 flex-1 bg-zinc-200 dark:bg-zinc-700 mt-1" />}
           </div>
           <div className="flex-1 pb-4">
-            <MathDisplay latex={entry.latex} description={entry.description} type={entry.type} imageUrl={entry.imageUrl} />
+            <MathDisplay latex={entry.latex} description={entry.description} type={entry.type} imageUrl={entry.imageUrl} data={entry.data} />
           </div>
         </div>
       ))}

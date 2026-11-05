@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import SpeechButton from "./SpeechButton";
+import GraphSonifier from "./GraphSonifier";
 
 declare global {
   interface Window {
@@ -15,11 +16,12 @@ declare global {
 interface Props {
   latex: string;
   description: string;
-  type: "math" | "text";
+  type: "math" | "text" | "graph";
   imageUrl?: string;
+  data?: { x: number; y: number }[];
 }
 
-export default function MathDisplay({ latex, description, type, imageUrl }: Props) {
+export default function MathDisplay({ latex, description, type, imageUrl, data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [structuralSpeech, setStructuralSpeech] = useState<string>("");
 
@@ -62,12 +64,16 @@ export default function MathDisplay({ latex, description, type, imageUrl }: Prop
         >
           {`$$${latex}$$`}
         </div>
+      ) : type === "graph" && data ? (
+        <GraphSonifier data={data} description={description} />
       ) : (
         <p className="text-base">{latex}</p>
       )}
 
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <p className="text-sm text-zinc-500 flex-1 min-w-0">{description}</p>
+        {type !== "graph" && (
+          <p className="text-sm text-zinc-500 flex-1 min-w-0">{description}</p>
+        )}
         <SpeechButton text={description} structuralText={type === "math" ? structuralSpeech : undefined} />
       </div>
     </div>

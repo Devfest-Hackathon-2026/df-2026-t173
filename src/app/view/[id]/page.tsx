@@ -10,9 +10,10 @@ import SpeechButton from "@/components/SpeechButton";
 
 interface Entry {
   id: string;
-  type: "math" | "text";
+  type: "math" | "text" | "graph";
   latex: string;
   description: string;
+  data?: { x: number; y: number }[];
   order?: number;
   createdAt: number;
 }
@@ -100,7 +101,7 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
                 {entry.type === "math" ? "数式" : "テキスト"}
               </span>
             </div>
-            <MathDisplay latex={entry.latex} description={entry.description} type={entry.type} />
+            <MathDisplay latex={entry.latex} description={entry.description} type={entry.type} data={entry.data} />
           </div>
         ))}
       </main>
