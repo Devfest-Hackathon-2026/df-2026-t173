@@ -12,7 +12,7 @@
 
 ### 技術スタック
 - Next.js 16.4.5 (App Router, Turbopack)
-- `@google/generative-ai` v0.24.1（旧SDK）
+- `@google/genai` v2.32.0（Live API / File API 対応）
 - Firebase v13.2.0
 - MathJax 3.2.2 (CDN)
 - デプロイ: 未定（localhost開発中）
@@ -155,8 +155,11 @@
 - [x] Geminiプロンプト: graph type対応（座標データ抽出）
 - [x] /api/token: エフェメラルトークン発行API実装
 - [x] LiveCapture: カメラ映像→Gemini Live APIリアルタイム送信コンポーネント実装
-- [x] 教師画面: 画像アップロード/ライブモード切替UI実装
+- [x] 教師画面: 画像アップロード/ライブモード/動画アップロード 3モード切替UI実装
 - [x] 学生画面: aria-live="polite"、グラフtype表示対応
+- [x] 動画アップロード: Gemini File API で動画→LaTeX抽出、タイムスタンプ付き
+- [x] /api/convert-video: 動画処理APIルート実装
+- [x] VideoUploader: 動画アップロードUIコンポーネント実装
 
 ## 技術検証済み（使用しない技術）
 
