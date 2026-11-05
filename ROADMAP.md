@@ -146,12 +146,21 @@
 
 ---
 
-## 技術検証済み事項（2026-11-06）
+## 実装済み事項（2026-11-06）
 
 - [x] MathJax 3.2.2 + SRE: 構造ナビゲーション動作確認
 - [x] SRE 日本語ロケール: 未対応（en/fr/es/de/itのみ）→ Gemini日本語description で代替
-- [x] `@google/genai` v2.32.0: ブラウザ用エクスポートあり、Live API対応
+- [x] `@google/genai` v2.32.0: SDK移行完了、Live API対応
+- [x] GraphSonifier: Web Audio APIでグラフを音で辿る機能実装
+- [x] Geminiプロンプト: graph type対応（座標データ抽出）
+- [x] /api/token: エフェメラルトークン発行API実装
+- [x] LiveCapture: カメラ映像→Gemini Live APIリアルタイム送信コンポーネント実装
+- [x] 教師画面: 画像アップロード/ライブモード切替UI実装
+- [x] 学生画面: aria-live="polite"、グラフtype表示対応
+
+## 技術検証済み（使用しない技術）
+
 - [x] diagcess: UNLICENSED、npm利用者0 → 使用しない
-- [x] Web Audio API: ブラウザ標準、ソニフィケーション自前実装可能
 - [x] Video Intelligence API: 2026年9月廃止予定 → 使用しない
 - [x] MathJax 4.1.3: 最新だが移行コスト高、3.2.2で十分
+- [x] Chirp 3: Gemini LiveがTTS/STT両方対応するため不要
