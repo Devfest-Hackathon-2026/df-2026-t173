@@ -7,7 +7,11 @@ export default function MathJaxLoader() {
     if (window.MathJax) return;
 
     (window as any).MathJax = {
-      tex: { inlineMath: [["$", "$"]], displayMath: [["$$", "$$"]] },
+      tex: {
+        inlineMath: [["$", "$"]],
+        displayMath: [["$$", "$$"]],
+        packages: { "[+]": ["ams", "boldsymbol", "cases"] },
+      },
       options: {
         enableMenu: true,
         menuOptions: {

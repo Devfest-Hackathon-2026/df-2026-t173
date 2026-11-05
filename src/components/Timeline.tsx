@@ -22,9 +22,16 @@ export default function Timeline({ entries }: Props) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" role="list" aria-label="数式タイムライン">
       {entries.map((entry, i) => (
-        <div key={entry.id} className="flex gap-4">
+        <div
+          key={entry.id}
+          className="flex gap-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          role="listitem"
+          tabIndex={0}
+          data-entry-index={i}
+          aria-label={`${i + 1}番目: ${entry.description}`}
+        >
           <div className="flex flex-col items-center">
             <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
               {i + 1}

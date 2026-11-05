@@ -117,6 +117,15 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
 
       <section className="mt-8" aria-label="タイムライン">
         <h2 className="text-lg font-semibold mb-4">タイムライン</h2>
+        <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg text-sm space-y-1">
+          <p className="font-semibold">キーボード操作ガイド</p>
+          <ul className="list-disc list-inside text-zinc-600 dark:text-zinc-400 space-y-0.5">
+            <li><kbd className="px-1 py-0.5 bg-white dark:bg-zinc-800 rounded border text-xs">Tab</kbd> 次の数式へ移動</li>
+            <li><kbd className="px-1 py-0.5 bg-white dark:bg-zinc-800 rounded border text-xs">Enter</kbd> 数式の構造探索を開始</li>
+            <li><kbd className="px-1 py-0.5 bg-white dark:bg-zinc-800 rounded border text-xs">↑↓←→</kbd> 数式の部分をたどる（分子・分母・ルート内など）</li>
+            <li><kbd className="px-1 py-0.5 bg-white dark:bg-zinc-800 rounded border text-xs">Esc</kbd> 探索を終了</li>
+          </ul>
+        </div>
         <Timeline entries={entriesWithImages} />
       </section>
     </div>
