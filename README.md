@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MathVoice - 数式アクセシビリティWebアプリ
 
-## Getting Started
+視覚障害のある大学生が、講義スライドの数式をキーボードで構造的にナビゲートして理解できるWebアプリ。
 
-First, run the development server:
+## 特徴
+
+- **画像→数式変換**: Gemini 3.1 Flash Lite で講義スライド画像からLaTeX数式を抽出
+- **構造ナビゲーション**: MathJax + Speech Rule Engine で数式の部分（分子・分母・ルート内など）をキーボードでたどれる
+- **音声読み上げ**: 日本語の説明読み上げ + 英語の構造読み上げ（StartFraction, Over, EndRoot...）
+- **リアルタイム同期**: Firebase/Firestore で教師がアップロード → 学生の画面にリアルタイム反映
+- **2画面構成**: 教師用（画像アップロード）・学生用（閲覧・探索）
+
+## セットアップ
+
+### 1. リポジトリをクローン
+
+```bash
+git clone https://github.com/woodgate1009/DevFest-Demo.git
+cd DevFest-Demo
+npm install
+```
+
+### 2. 環境変数を設定
+
+```bash
+cp .env.example .env.local
+```
+
+`.env.local` を編集して、以下のキーを設定:
+
+#### Gemini API キー
+1. [Google AI Studio](https://aistudio.google.com/apikey) にアクセス
+2. 「APIキーを作成」でキーを発行
+3. `GEMINI_API_KEY` に設定
+
+#### Firebase 設定
+1. [Firebase Console](https://console.firebase.google.com/) でプロジェクトを作成
+2. 「ウェブアプリを追加」で設定値を取得
+3. Firestore Database を作成（テストモードでOK）
+4. 各 `NEXT_PUBLIC_FIREBASE_*` に設定
+
+### 3. 起動
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+http://localhost:3000 を開く。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 使い方
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. トップページで「新しいセッションを開始」→ 教師用画面が開く
+2. 教師用画面の「学生用URL」を共有
+3. 講義スライドの画像をアップロード → Geminiが数式を抽出
+4. 学生用画面にリアルタイムで数式が表示される
 
-## Learn More
+### キーボード操作（学生用画面）
 
-To learn more about Next.js, take a look at the following resources:
+| キー | 操作 |
+|------|------|
+| Tab | 次の数式へ移動 |
+| Enter | 数式の構造探索を開始 |
+| ←→↑↓ | 数式の部分をたどる |
+| Esc | 探索を終了 |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 技術スタック
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Next.js 16 (App Router)
+- Gemini 3.1 Flash Lite
+- MathJax 3.2.2 + Speech Rule Engine
+- Firebase / Firestore
+- Tailwind CSS
+- Web Speech API
