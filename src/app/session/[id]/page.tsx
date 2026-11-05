@@ -7,6 +7,7 @@ import { doc, getDoc, collection, addDoc, onSnapshot, query, orderBy, Timestamp 
 import { db } from "@/lib/firebase";
 import ImageUploader from "@/components/ImageUploader";
 import LiveCapture from "@/components/LiveCapture";
+import VideoUploader from "@/components/VideoUploader";
 import Timeline, { type TimelineEntry } from "@/components/Timeline";
 
 interface GeminiEntry {
@@ -23,7 +24,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [imageMap, setImageMap] = useState<Record<number, string>>({});
-  const [liveMode, setLiveMode] = useState(false);
+  const [mode, setMode] = useState<"image" | "live" | "video">("image");
 
   useEffect(() => {
     getDoc(doc(db, "sessions", id)).then((snap) => {
@@ -119,22 +120,21 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
       </header>
 
       <div className="flex gap-2 mb-4">
-        <button
-          onClick={() => setLiveMode(false)}
-          className={`px-4 py-2 text-sm rounded-md transition-colors ${!liveMode ? "bg-blue-500 text-white" : "bg-zinc-200 dark:bg-zinc-700"}`}
-        >
-          画像アップロード
-        </button>
-        <button
-          onClick={() => setLiveMode(true)}
-          className={`px-4 py-2 text-sm rounded-md transition-colors ${liveMode ? "bg-blue-500 text-white" : "bg-zinc-200 dark:bg-zinc-700"}`}
-        >
-          ライブモード
-        </button>
+        {(["image", "live", "video"] as const).map((m) => (
+          <button
+            key={m}
+            onClick={() => setMode(m)}
+            className={`px-4 py-2 text-sm rounded-md transition-colors ${mode === m ? "bg-blue-500 text-white" : "bg-zinc-200 dark:bg-zinc-700"}`}
+          >
+            {m === "image" ? "画像アップロード" : m === "live" ? "ライブモード" : "動画アップロード"}
+          </button>
+        ))}
       </div>
 
-      {liveMode ? (
+      {mode === "live" ? (
         <LiveCapture onResult={handleLiveResult} />
+      ) : mode === "video" ? (
+        <VideoUploader onResult={handleLiveResult} />
       ) : (
         <ImageUploader onUpload={handleUpload} isLoading={isLoading} />
       )}
