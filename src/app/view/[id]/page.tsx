@@ -6,7 +6,6 @@ import { useEffect, useState, useRef, use } from "react";
 import { doc, getDoc, collection, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import MathDisplay from "@/components/MathDisplay";
-import SpeechButton from "@/components/SpeechButton";
 
 interface Entry {
   id: string;
@@ -61,7 +60,7 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
 
   return (
     <div className="flex flex-col flex-1 max-w-3xl mx-auto w-full px-4 py-8">
-      <div ref={liveRef} aria-live="assertive" aria-atomic="true" className="sr-only" />
+      <div ref={liveRef} aria-live="polite" aria-atomic="true" className="sr-only" />
 
       <header className="mb-6">
         <h1 className="text-2xl font-bold" tabIndex={-1}>{title || "読み込み中..."}</h1>
@@ -98,7 +97,7 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
                 {i + 1}
               </span>
               <span className="text-xs text-zinc-400">
-                {entry.type === "math" ? "数式" : "テキスト"}
+                {entry.type === "math" ? "数式" : entry.type === "graph" ? "グラフ" : "テキスト"}
               </span>
             </div>
             <MathDisplay latex={entry.latex} description={entry.description} type={entry.type} data={entry.data} />
