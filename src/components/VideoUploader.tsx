@@ -17,6 +17,10 @@ export default function VideoUploader({ onResult }: Props) {
       setError("動画ファイルを選択してください");
       return;
     }
+    if (file.size > 100 * 1024 * 1024) {
+      setError("100MB以下の動画を選択してください");
+      return;
+    }
 
     setVideoUrl(URL.createObjectURL(file));
     setStatus("uploading");
@@ -49,8 +53,12 @@ export default function VideoUploader({ onResult }: Props) {
         className="border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
         onClick={() => inputRef.current?.click()}
       >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-10 h-10 mx-auto text-zinc-400 mb-2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-8.625 0V5.625m0 0A1.125 1.125 0 013.375 4.5h17.25c.621 0 1.125.504 1.125 1.125m-21.75 0v1.5c0 .621.504 1.125 1.125 1.125M21.75 5.625v12.75m0-12.75v1.5c0 .621-.504 1.125-1.125 1.125m1.125-2.625c0-.621-.504-1.125-1.125-1.125" />
+          <path d="M10 8.5l6 3.5-6 3.5v-7z" fill="currentColor" stroke="none" />
+        </svg>
         <p className="text-lg font-medium">講義動画をアップロード</p>
-        <p className="text-sm text-zinc-500 mt-1">MP4, WebM, MOV に対応</p>
+        <p className="text-sm text-zinc-500 mt-1">MP4, WebM, MOV に対応（100MBまで）</p>
         <input
           ref={inputRef}
           type="file"

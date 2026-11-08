@@ -46,7 +46,20 @@ export default function LiveCapture({ onResult }: Props) {
     const { token } = await res.json();
 
     setStatus("カメラ起動中...");
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 768, height: 768 }, audio: false });
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { width: 768, height: 768 }, audio: false });
+    } catch (e) {
+      const name = e instanceof DOMException ? e.name : "";
+      if (name === "NotAllowedError") {
+        setStatus("カメラの使用を許可してください（ブラウザのアドレスバー左のアイコンから設定できます）");
+      } else if (name === "NotFoundError") {
+        setStatus("カメラが見つかりません。デバイスを接続してください");
+      } else {
+        setStatus("カメラの起動に失敗しました");
+      }
+      return;
+    }
     streamRef.current = stream;
     if (videoRef.current) {
       videoRef.current.srcObject = stream;

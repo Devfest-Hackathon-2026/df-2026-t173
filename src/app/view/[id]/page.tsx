@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useEffect, useState, useRef, use } from "react";
 import { doc, getDoc, collection, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -90,7 +88,7 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
             data-entry-index={i}
             tabIndex={0}
             aria-label={`${i + 1}番目: ${entry.description}`}
-            className="rounded-xl border border-zinc-200 dark:border-zinc-700 p-5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="rounded-xl border border-zinc-200 dark:border-zinc-700 p-5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 card-hover"
           >
             <div className="flex items-center gap-3 mb-3">
               <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold shrink-0">

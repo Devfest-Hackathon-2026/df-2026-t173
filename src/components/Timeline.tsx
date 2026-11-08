@@ -27,7 +27,7 @@ export default function Timeline({ entries }: Props) {
       {entries.map((entry, i) => (
         <div
           key={entry.id}
-          className="flex gap-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="flex gap-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 card-hover"
           role="listitem"
           tabIndex={0}
           data-entry-index={i}

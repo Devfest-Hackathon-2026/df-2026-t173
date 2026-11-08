@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractFromVideo } from "@/lib/gemini";
 
+export const maxDuration = 300;
+
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
