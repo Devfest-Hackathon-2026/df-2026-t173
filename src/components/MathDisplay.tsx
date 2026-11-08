@@ -16,12 +16,13 @@ declare global {
 interface Props {
   latex: string;
   description: string;
+  reading?: string;
   type: "math" | "text" | "graph";
   imageUrl?: string;
   data?: { x: number; y: number }[];
 }
 
-export default function MathDisplay({ latex, description, type, imageUrl, data }: Props) {
+export default function MathDisplay({ latex, description, reading, type, imageUrl, data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [structuralSpeech, setStructuralSpeech] = useState<string>("");
 
@@ -74,7 +75,7 @@ export default function MathDisplay({ latex, description, type, imageUrl, data }
         {type !== "graph" && (
           <p className="text-sm text-zinc-500 flex-1 min-w-0">{description}</p>
         )}
-        <SpeechButton text={description} structuralText={type === "math" ? structuralSpeech : undefined} />
+        <SpeechButton text={reading || description} structuralText={type === "math" ? structuralSpeech : undefined} />
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ interface Entry {
   type: "math" | "text" | "graph";
   latex: string;
   description: string;
+  reading?: string;
   data?: { x: number; y: number }[];
   order?: number;
   createdAt: number;
@@ -98,7 +99,7 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
                 {entry.type === "math" ? "数式" : entry.type === "graph" ? "グラフ" : "テキスト"}
               </span>
             </div>
-            <MathDisplay latex={entry.latex} description={entry.description} type={entry.type} data={entry.data} />
+            <MathDisplay latex={entry.latex} description={entry.description} reading={entry.reading} type={entry.type} data={entry.data} />
           </div>
         ))}
       </main>

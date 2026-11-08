@@ -12,6 +12,7 @@ interface GeminiEntry {
   type: "math" | "text" | "graph";
   latex: string;
   description: string;
+  reading?: string;
   data?: { x: number; y: number }[];
 }
 
@@ -54,6 +55,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
           type: entry.type,
           latex: entry.latex,
           description: entry.description,
+          ...(entry.reading ? { reading: entry.reading } : {}),
           ...(entry.data ? { data: entry.data } : {}),
           order: startOrder + i,
           createdAt: Timestamp.now(),

@@ -9,6 +9,7 @@ export interface GeminiEntry {
   type: "math" | "text" | "graph";
   latex: string;
   description: string;
+  reading?: string;
   data?: { x: number; y: number }[];
 }
 
@@ -26,6 +27,7 @@ const PROMPT = `あなたは大学の講義スライドから数式・テキス�
       "type": "math" または "text" または "graph",
       "latex": "数式の場合はLaTeX文字列。テキストの場合はそのテキスト。グラフの場合は空文字。",
       "description": "この内容の日本語での自然言語説明（視覚障害のある学生が理解できるように丁寧に）",
+      "reading": "音声読み上げ用のひらがな交じり表記",
       "data": [{"x": -2, "y": 4}, {"x": -1, "y": 1}, ...] // グラフの場合のみ座標点を含む
     }
   ]
@@ -36,6 +38,7 @@ const PROMPT = `あなたは大学の講義スライドから数式・テキス�
 - 1枚の画像に複数の要素があれば配列で返す
 - 出現順に並べる
 - descriptionは「xの2乗」のように読み上げに適した表現にする
+- readingはdescriptionを音声合成で正しく読めるように変換したもの。漢字の読み間違いを防ぐため、専門用語や難読漢字はひらがなにする（例: 「微分方程式」→「びぶん ほうていしき」、「積分」→「せきぶん」）
 - グラフや関数のプロットが含まれる場合はtype:"graph"とし、主要な座標点をdata配列で返す（10〜20点程度）
 - dataフィールドはtype:"graph"の場合のみ含める`;
 
@@ -58,6 +61,7 @@ const VIDEO_PROMPT = `あなたは大学の講義動画から数式・テキス�
       "type": "math" または "text" または "graph",
       "latex": "数式の場合はLaTeX文字列。テキストの場合はそのテキスト。グラフの場合は空文字。",
       "description": "この内容の日本語での自然言語説明（視覚障害のある学生が理解できるように丁寧に）",
+      "reading": "音声読み上げ用のひらがな交じり表記",
       "timestamp": "0:00",
       "data": [{"x": -2, "y": 4}, ...] // グラフの場合のみ
     }
@@ -70,6 +74,7 @@ const VIDEO_PROMPT = `あなたは大学の講義動画から数式・テキス�
 - timestampは数式やテキストが画面に現れたおおよその時刻（mm:ss形式）
 - 同じ数式が長時間表示されていても1回だけ記録する
 - descriptionは読み上げに適した日本語表現にする
+- readingはdescriptionを音声合成で正しく読めるように変換したもの。専門用語や難読漢字はひらがなにする
 - グラフの場合は主要な座標点をdata配列で返す`;
 
 export async function extractFromVideo(videoBuffer: Buffer, mimeType: string): Promise<VideoGeminiResult> {
