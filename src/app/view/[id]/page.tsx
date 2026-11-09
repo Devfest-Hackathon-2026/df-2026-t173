@@ -7,10 +7,11 @@ import MathDisplay from "@/components/MathDisplay";
 
 interface Entry {
   id: string;
-  type: "math" | "text" | "graph";
+  type: "math" | "text" | "graph" | "narration";
   latex: string;
   description: string;
   reading?: string;
+  timestamp?: string;
   data?: { x: number; y: number }[];
   order?: number;
   createdAt: number;
@@ -92,12 +93,25 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
             className="rounded-xl border border-zinc-200 dark:border-zinc-700 p-5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 card-hover"
           >
             <div className="flex items-center gap-3 mb-3">
-              <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
-                {i + 1}
+              <span className={`w-8 h-8 rounded-full text-white flex items-center justify-center text-sm font-bold shrink-0 ${
+                entry.type === "narration" ? "bg-purple-500" : "bg-blue-500"
+              }`}>
+                {entry.type === "narration" ? (
+                  <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                    <path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" />
+                  </svg>
+                ) : (
+                  i + 1
+                )}
               </span>
               <span className="text-xs text-zinc-400">
-                {entry.type === "math" ? "数式" : entry.type === "graph" ? "グラフ" : "テキスト"}
+                {entry.type === "math" ? "数式" : entry.type === "graph" ? "グラフ" : entry.type === "narration" ? "ナレーション" : "テキスト"}
               </span>
+              {entry.timestamp && (
+                <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">
+                  {entry.timestamp}
+                </span>
+              )}
             </div>
             <MathDisplay latex={entry.latex} description={entry.description} reading={entry.reading} type={entry.type} data={entry.data} />
           </div>

@@ -3,12 +3,14 @@
 import { useCallback, useRef, useState } from "react";
 
 interface Props {
-  onResult: (entries: { type: "math" | "text" | "graph"; latex: string; description: string; timestamp?: string; data?: { x: number; y: number }[] }[]) => void;
+  onResult: (entries: { type: "math" | "text" | "graph" | "narration"; latex: string; description: string; reading?: string; timestamp?: string; data?: { x: number; y: number }[] }[]) => void;
+  onSummary?: (summary: string) => void;
 }
 
-export default function VideoUploader({ onResult }: Props) {
+export default function VideoUploader({ onResult, onSummary }: Props) {
   const [status, setStatus] = useState<"idle" | "uploading" | "processing" | "done" | "error">("idle");
   const [error, setError] = useState("");
+  const [summary, setSummary] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -38,6 +40,10 @@ export default function VideoUploader({ onResult }: Props) {
       }
       const data = await res.json();
       setStatus("done");
+      if (data.summary) {
+        setSummary(data.summary);
+        onSummary?.(data.summary);
+      }
       if (data.entries?.length > 0) {
         onResult(data.entries);
       }
@@ -82,7 +88,15 @@ export default function VideoUploader({ onResult }: Props) {
       )}
 
       {status === "done" && (
-        <p className="text-sm text-green-600 dark:text-green-400">解析完了！タイムラインに追加されました。</p>
+        <div className="space-y-2">
+          <p className="text-sm text-green-600 dark:text-green-400">解析完了！タイムラインに追加されました。</p>
+          {summary && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg" role="region" aria-label="講義サマリー">
+              <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">講義サマリー</p>
+              <p className="text-sm">{summary}</p>
+            </div>
+          )}
+        </div>
       )}
 
       {error && (

@@ -9,10 +9,11 @@ import VideoUploader from "@/components/VideoUploader";
 import Timeline, { type TimelineEntry } from "@/components/Timeline";
 
 interface GeminiEntry {
-  type: "math" | "text" | "graph";
+  type: "math" | "text" | "graph" | "narration";
   latex: string;
   description: string;
   reading?: string;
+  timestamp?: string;
   data?: { x: number; y: number }[];
 }
 
@@ -24,6 +25,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   const [error, setError] = useState("");
   const [imageMap, setImageMap] = useState<Record<number, string>>({});
   const [mode, setMode] = useState<"image" | "live" | "video">("image");
+  const [videoSummary, setVideoSummary] = useState("");
 
   useEffect(() => {
     getDoc(doc(db, "sessions", id)).then((snap) => {
@@ -56,6 +58,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
           latex: entry.latex,
           description: entry.description,
           ...(entry.reading ? { reading: entry.reading } : {}),
+          ...(entry.timestamp ? { timestamp: entry.timestamp } : {}),
           ...(entry.data ? { data: entry.data } : {}),
           order: startOrder + i,
           createdAt: Timestamp.now(),
@@ -147,7 +150,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
       {mode === "live" ? (
         <LiveCapture onResult={handleLiveResult} />
       ) : mode === "video" ? (
-        <VideoUploader onResult={handleLiveResult} />
+        <VideoUploader onResult={handleLiveResult} onSummary={setVideoSummary} />
       ) : (
         <ImageUploader onUpload={handleUpload} isLoading={isLoading} />
       )}
