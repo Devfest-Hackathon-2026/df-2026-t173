@@ -208,7 +208,7 @@ function playBlob(blob: Blob, id: string, ticket: number): Promise<void> {
 export async function toggleGoogleSpeech(id: string, text: string) {
   if (state.id === id && state.status !== "idle") { stopSpeech(); return; }
   stopSpeech();
-  const chunks = splitSpeechText(text);
+  const chunks = splitSpeechText(normalizeJapaneseSpeech(text));
   if (!chunks.length) return;
   const ticket = generation;
   const abort = new AbortController();
@@ -257,7 +257,7 @@ export function toggleLocalSpeech(id: string, text: string, lang: string) {
     return;
   }
   const ticket = generation;
-  const utterance = new SpeechSynthesisUtterance(text);
+  const utterance = new SpeechSynthesisUtterance(lang === "ja-JP" ? normalizeJapaneseSpeech(text) : text);
   utterance.lang = lang;
   utterance.rate = getSpeechRate();
   utterance.onend = () => { if (ticket === generation) stopSpeech(); };
@@ -270,7 +270,13 @@ export function toggleLocalSpeech(id: string, text: string, lang: string) {
   speechSynthesis.speak(utterance);
 }
 
-export function speakExploration(text: string) {
+export function speakExploration(text: string, lang = "en-US") {
   stopSpeech();
-  toggleLocalSpeech("math-exploration", text, "en-US");
+  toggleLocalSpeech("math-exploration", text, lang);
+}
+
+// Preserve pronunciation cleanup for scripts created before the Google TTS migration.
+export function normalizeJapaneseSpeech(text: string): string {
+  return text.replace(/\[間\]/g, "、").replace(/[=＝]/g, "いこーる")
+    .replace(/、(?:[\s、])*/g, "、").trim();
 }

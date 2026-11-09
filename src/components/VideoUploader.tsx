@@ -3,12 +3,14 @@
 import { useCallback, useRef, useState } from "react";
 
 interface Props {
-  onResult: (entries: { type: "math" | "text" | "graph"; latex: string; description: string; timestamp?: string; data?: { x: number; y: number }[] }[]) => void | Promise<void>;
+  onResult: (entries: { type: "math" | "text" | "graph" | "narration"; latex: string; description: string; reading?: string; timestamp?: string; data?: { x: number; y: number }[] }[]) => void | Promise<void>;
+  onSummary?: (summary: string) => void;
 }
 
-export default function VideoUploader({ onResult }: Props) {
+export default function VideoUploader({ onResult, onSummary }: Props) {
   const [status, setStatus] = useState<"idle" | "uploading" | "processing" | "done" | "error">("idle");
   const [error, setError] = useState("");
+  const [summary, setSummary] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -25,6 +27,7 @@ export default function VideoUploader({ onResult }: Props) {
 
     setVideoUrl(URL.createObjectURL(file));
     setStatus("uploading");
+    setSummary("");
     setError("");
 
     const formData = new FormData();
@@ -38,17 +41,22 @@ export default function VideoUploader({ onResult }: Props) {
         throw new Error(data.error || "動画の処理に失敗しました");
       }
       const data = await res.json();
+
       if (data.entries?.length > 0) {
         await onResult(data.entries);
       } else {
         throw new Error("数式やテキストが見つかりませんでした。別の動画でお試しください。");
+      }
+      if (data.summary) {
+        setSummary(data.summary);
+        onSummary?.(data.summary);
       }
       setStatus("done");
     } catch (e) {
       setError(e instanceof Error ? e.message : "エラーが発生しました");
       setStatus("error");
     }
-  }, [onResult, status]);
+  }, [onResult, onSummary, status]);
 
   return (
     <div className="space-y-4">
@@ -98,7 +106,15 @@ export default function VideoUploader({ onResult }: Props) {
       )}
 
       {status === "done" && (
-        <p className="text-sm text-green-600 dark:text-green-400">解析完了！タイムラインに追加されました。</p>
+        <div className="space-y-2">
+          <p className="text-sm text-green-600 dark:text-green-400">解析完了！タイムラインに追加されました。</p>
+          {summary && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg" role="region" aria-label="講義サマリー">
+              <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 mb-1">講義サマリー</p>
+              <p className="text-sm">{summary}</p>
+            </div>
+          )}
+        </div>
       )}
 
       {error && (

@@ -165,7 +165,7 @@ export default function StudentSession({ sessionId }: { sessionId: string }) {
         {!entries.length && <p className="text-zinc-500 text-center py-8">上の「学習する資料を追加」から画像や動画を取り込んでください。解析した内容がここに表示されます。</p>}
         {entries.map((entry, index) => {
           const annotation = annotations[entry.id];
-          const kind = entry.type === "math" ? "数式" : entry.type === "graph" ? "グラフ" : "テキスト";
+          const kind = entry.type === "math" ? "数式" : entry.type === "graph" ? "グラフ" : entry.type === "narration" ? "講師の説明" : "テキスト";
           return (
             <div key={entry.id} id={`entry-${entry.id}`} role="listitem" data-entry-id={entry.id}
               data-entry-index={index} tabIndex={0} aria-label={`${index + 1}番目: ${entry.description}`}
@@ -173,6 +173,7 @@ export default function StudentSession({ sessionId }: { sessionId: string }) {
               <div className="flex items-center gap-3 mb-3">
                 <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold shrink-0">{index + 1}</span>
                 <span className="text-xs text-zinc-500">{kind}</span>
+                {entry.timestamp && <span className="text-xs font-mono text-zinc-500">{entry.timestamp}</span>}
                 {unread.includes(entry.id) && <span className="text-xs text-blue-700 dark:text-blue-300">未読</span>}
               </div>
               <MathDisplay {...entry} />
@@ -199,7 +200,7 @@ export default function StudentSession({ sessionId }: { sessionId: string }) {
 
       <div className="mt-8" onFocusCapture={() => setMode(false)}>
         <ContentAssistant key={target?.id ?? "lecture"} entries={target ? [target] : entries}
-          targetLabel={target ? `${targetIndex + 1}番目の${target.type === "math" ? "数式" : target.type === "graph" ? "グラフ" : "テキスト"}` : undefined}
+          targetLabel={target ? `${targetIndex + 1}番目の${target.type === "math" ? "数式" : target.type === "graph" ? "グラフ" : target.type === "narration" ? "講師の説明" : "テキスト"}` : undefined}
           onClearTarget={() => selectTarget(null)} />
       </div>
     </div>

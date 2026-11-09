@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import SpeechButton from "./SpeechButton";
 
 interface AssistantEntry {
-  type: "math" | "text" | "graph";
+  type: "math" | "text" | "graph" | "narration";
   latex: string;
   description: string;
 }

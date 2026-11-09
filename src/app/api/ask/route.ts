@@ -8,7 +8,7 @@ const MAX_HISTORY = 10;
 function isEntry(value: unknown): value is AssistantContextEntry {
   if (!value || typeof value !== "object") return false;
   const entry = value as Record<string, unknown>;
-  return ["math", "text", "graph"].includes(String(entry.type))
+  return ["math", "text", "graph", "narration"].includes(String(entry.type))
     && typeof entry.latex === "string" && typeof entry.description === "string";
 }
 

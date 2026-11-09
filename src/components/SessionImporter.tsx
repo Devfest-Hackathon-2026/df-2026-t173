@@ -42,6 +42,7 @@ export default function SessionImporter({ sessionId, nextOrder }: Props) {
     allocatedOrder.current = start + entries.length;
     await saveSessionEntries(sessionId, entries.map((entry, index) => ({
       type: entry.type, latex: entry.latex, description: entry.description,
+      ...(entry.timestamp ? { timestamp: entry.timestamp } : {}),
       ...(entry.reading ? { reading: entry.reading } : {}),
       ...(entry.data ? { data: entry.data } : {}),
       order: start + index,

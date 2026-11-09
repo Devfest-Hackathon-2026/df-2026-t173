@@ -269,3 +269,16 @@ test('a cancelled readiness callback cannot restart playback', async () => {
   assert.equal(audios[0].plays.filter((play) => !play.loop).length, 0);
   assert.equal(player.getSpeechSnapshot().status, 'idle');
 });
+
+test('merged pronunciation cleanup retains older Japanese reading scripts', () => {
+  assert.equal(player.normalizeJapaneseSpeech('えっくす[間] = 1'), 'えっくす、いこーる 1');
+  assert.equal(player.normalizeJapaneseSpeech('えっくす＝いち'), 'えっくすいこーるいち');
+});
+
+test('Japanese structure exploration uses the shared player and selected speed', () => {
+  player.setSpeechRate(1.4);
+  player.speakExploration('えっくす の にじょう', 'ja-JP');
+  assert.equal(utterances[0].lang, 'ja-JP');
+  assert.equal(utterances[0].rate, 1.4);
+  assert.equal(player.getSpeechSnapshot().id, 'math-exploration');
+});
