@@ -52,27 +52,74 @@ export default function MathJaxLoader() {
   return null;
 }
 
+function sreToJapanese(text: string): string {
+  const map: [RegExp, string][] = [
+    [/\bStartFraction\b/g, "ぶんすう"],
+    [/\bEndFraction\b/g, ""],
+    [/\bNumerator\b/g, "ぶんし"],
+    [/\bDenominator\b/g, "ぶんぼ"],
+    [/\bOver\b/g, "ぶんの"],
+    [/\bStartRoot\b/g, "ルート"],
+    [/\bEndRoot\b/g, ""],
+    [/\bStartAbsoluteValue\b/g, "ぜったいち"],
+    [/\bEndAbsoluteValue\b/g, ""],
+    [/\bsquared\b/g, "の にじょう"],
+    [/\bcubed\b/g, "の さんじょう"],
+    [/\bsuperscript\b/g, "の"],
+    [/\bsubscript\b/g, "した"],
+    [/\bplus\b/g, "たす"],
+    [/\bminus\b/g, "ひく"],
+    [/\bnegative\b/g, "マイナス"],
+    [/\bequals\b/g, "イコール"],
+    [/\btimes\b/g, "かける"],
+    [/\bdivided by\b/g, "わる"],
+    [/\bor\b/g, "または"],
+    [/\bleft-parenthesis\b/g, "かっこ"],
+    [/\bright-parenthesis\b/g, "かっことじ"],
+    [/\bsine\b/g, "サイン"],
+    [/\bcosine\b/g, "コサイン"],
+    [/\btangent\b/g, "タンジェント"],
+    [/\blogarithm\b/g, "ログ"],
+    [/\binfinity\b/g, "むげんだい"],
+    [/\bintegral\b/g, "せきぶん"],
+    [/\bsummation\b/g, "シグマ"],
+    [/\bdelta\b/g, "デルタ"],
+    [/\balpha\b/g, "アルファ"],
+    [/\bbeta\b/g, "ベータ"],
+    [/\bgamma\b/g, "ガンマ"],
+    [/\bpi\b/g, "パイ"],
+    [/\btheta\b/g, "シータ"],
+    [/\blambda\b/g, "ラムダ"],
+    [/\bprime\b/g, "プライム"],
+    [/\bpartial\b/g, "へんびぶん"],
+  ];
+  let result = text;
+  for (const [pattern, replacement] of map) {
+    result = result.replace(pattern, replacement);
+  }
+  return result.replace(/\s+/g, " ").trim();
+}
+
 function setupSpeechOnExplore() {
   let currentUtterance: SpeechSynthesisUtterance | null = null;
+  let lastText = "";
 
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      if (mutation.type !== "childList") continue;
-      for (const node of mutation.addedNodes) {
-        if (!(node instanceof HTMLElement)) continue;
-        const live = node.closest("[aria-live]") as HTMLElement | null;
-        if (!live || !live.classList.contains("sre-explorer-highlight")) continue;
-        const text = live.textContent?.trim();
-        if (!text) continue;
+  setInterval(() => {
+    const region = document.querySelector(".MJX_LiveRegion_Show");
+    if (!region) return;
+    const text = region.textContent?.trim();
+    if (!text || text === lastText) return;
+    if (/[ぁ-んァ-ヶ]/.test(text)) { lastText = text; return; }
 
-        if (currentUtterance) speechSynthesis.cancel();
-        currentUtterance = new SpeechSynthesisUtterance(text);
-        currentUtterance.lang = "en-US";
-        currentUtterance.rate = 1.1;
-        speechSynthesis.speak(currentUtterance);
-      }
-    }
-  });
+    const jaText = sreToJapanese(text);
+    lastText = jaText;
+    region.textContent = jaText;
+    region.setAttribute("lang", "ja");
 
-  observer.observe(document.body, { childList: true, subtree: true });
+    if (currentUtterance) speechSynthesis.cancel();
+    currentUtterance = new SpeechSynthesisUtterance(jaText);
+    currentUtterance.lang = "ja-JP";
+    currentUtterance.rate = 1.1;
+    speechSynthesis.speak(currentUtterance);
+  }, 100);
 }
