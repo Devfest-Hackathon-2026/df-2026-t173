@@ -1,9 +1,10 @@
 "use client";
 
+import { getSessionTitle, watchEntries, sessionError } from "@/lib/session-store";
+
 import { useEffect, useState, useRef, use } from "react";
-import { doc, getDoc, collection, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import MathDisplay from "@/components/MathDisplay";
+import ContentAssistant from "@/components/ContentAssistant";
 
 interface Entry {
   id: string;
@@ -19,28 +20,19 @@ interface Entry {
 export default function ViewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [title, setTitle] = useState("");
+  const [error, setError] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
   const [prevCount, setPrevCount] = useState(0);
   const liveRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    getDoc(doc(db, "sessions", id)).then((snap) => {
-      if (snap.exists()) setTitle(snap.data().title);
-    });
-  }, [id]);
-
-  useEffect(() => {
-    const q = query(collection(db, "sessions", id, "entries"), orderBy("order", "asc"));
-    const unsub = onSnapshot(q, (snap) => {
-      const newEntries = snap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-        createdAt: (d.data().createdAt as Timestamp)?.toMillis?.() ?? Date.now(),
-      })) as Entry[];
-      setEntries(newEntries);
-    });
-    return unsub;
+    let active = true;
+    getSessionTitle(id).then((value) => { if (active) setTitle(value); })
+      .catch((error) => { if (active) setError(sessionError(error)); });
+    const unsubscribe = watchEntries(id, (value) => { if (active) setEntries(value); },
+      (error) => { if (active) setError(sessionError(error)); });
+    return () => { active = false; unsubscribe(); };
   }, [id]);
 
   useEffect(() => {
@@ -61,6 +53,7 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
     <div className="flex flex-col flex-1 max-w-3xl mx-auto w-full px-4 py-8">
       <div ref={liveRef} aria-live="polite" aria-atomic="true" className="sr-only" />
 
+      {error && <p role="alert" className="mb-4 text-red-700 dark:text-red-300">{error}</p>}
       <header className="mb-6">
         <h1 className="text-2xl font-bold" tabIndex={-1}>{title || "読み込み中..."}</h1>
         <div className="mt-3 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg text-sm space-y-1">
@@ -103,6 +96,10 @@ export default function ViewPage({ params }: { params: Promise<{ id: string }> }
           </div>
         ))}
       </main>
+
+      <div className="mt-8">
+        <ContentAssistant entries={entries} />
+      </div>
     </div>
   );
 }

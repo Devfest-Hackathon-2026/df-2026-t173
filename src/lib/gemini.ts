@@ -139,3 +139,60 @@ export async function extractFromImage(base64Image: string, mimeType: string): P
   }
   return JSON.parse(jsonMatch[0]);
 }
+
+export interface AssistantContextEntry {
+  type: "math" | "text" | "graph";
+  latex: string;
+  description: string;
+}
+
+export interface AssistantTurn {
+  role: "user" | "model";
+  text: string;
+}
+
+const ASSISTANT_PROMPT = `あなたは大学の講義内容について学生の学習を支援するアシスタントです。
+利用者には視覚障害のある学生が含まれ、回答はスクリーンリーダーや音声合成で読み上げられます。
+
+回答のルール:
+- 日本語の平易な文章で答える
+- Markdown記法（#, *, -, 表など）やLaTeX記法は使わない
+- 数式は「エックスの2乗」「エフ プライム エックス」のように読み上げられる言葉で書く
+- 箇条書きが必要な場合は「1つ目、」「2つ目、」のように文章で区切る
+- 講義内容に基づいて答え、講義に書かれていない補足をする場合は「講義の範囲外ですが」と前置きする
+- 簡潔に、要点から先に述べる`;
+
+function formatEntries(entries: AssistantContextEntry[]) {
+  return entries.map((entry, index) => {
+    const kind = entry.type === "math" ? "数式" : entry.type === "graph" ? "グラフ" : "テキスト";
+    const body = entry.latex ? `\n  内容: ${entry.latex}` : "";
+    return `${index + 1}. [${kind}]${body}\n  説明: ${entry.description}`;
+  }).join("\n");
+}
+
+export async function askAboutEntries(
+  entries: AssistantContextEntry[],
+  mode: "summary" | "question",
+  question: string,
+  history: AssistantTurn[],
+): Promise<string> {
+  const context = `以下はこの講義でこれまでに取り込まれた内容です（出現順）。\n\n${formatEntries(entries)}`;
+  const request = mode === "summary"
+    ? "この講義内容全体を要約してください。最初に一文で全体のテーマを述べ、その後に重要な数式や概念の流れを順番に説明してください。"
+    : question;
+
+  const result = await ai.models.generateContent({
+    model: "gemini-3.1-flash-lite",
+    config: { systemInstruction: ASSISTANT_PROMPT },
+    contents: [
+      { role: "user", parts: [{ text: context }] },
+      { role: "model", parts: [{ text: "講義内容を確認しました。質問をどうぞ。" }] },
+      ...history.map((turn) => ({ role: turn.role, parts: [{ text: turn.text }] })),
+      { role: "user", parts: [{ text: request }] },
+    ],
+  });
+
+  const text = result.text?.trim();
+  if (!text) throw new Error("Gemini returned an empty answer");
+  return text;
+}

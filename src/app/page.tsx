@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { createSession as saveSession, sessionError } from "@/lib/session-store";
 
 const FEATURES = [
   {
@@ -46,19 +45,22 @@ export default function Home() {
   const [title, setTitle] = useState("");
   const [creating, setCreating] = useState(false);
   const router = useRouter();
+  const [error, setError] = useState("");
+  const pending = useRef(false);
   const mathRef = useRef<HTMLDivElement>(null);
 
   const createSession = async () => {
-    if (!title.trim()) return;
+    if (!title.trim() || pending.current) return;
+    pending.current = true;
     setCreating(true);
+    setError("");
     try {
-      const docRef = await addDoc(collection(db, "sessions"), {
-        title: title.trim(),
-        createdAt: serverTimestamp(),
-      });
-      router.push(`/session/${docRef.id}`);
-    } catch (e) {
-      console.error(e);
+      const id = await saveSession(title.trim());
+      router.push(`/session/${id}`);
+    } catch (error) {
+      setError(sessionError(error));
+    } finally {
+      pending.current = false;
       setCreating(false);
     }
   };
@@ -156,8 +158,11 @@ export default function Home() {
           <h2 className="text-2xl font-bold">セッションを始める</h2>
           <p className="text-sm text-zinc-500">講義名を入力して、数式共有セッションを作成</p>
           <div className="space-y-3">
+            {error && <p role="alert" className="rounded-lg border border-red-600 p-3 text-red-700 dark:text-red-300">{error}</p>}
+            <p role="status" aria-atomic="true" className="sr-only">{creating ? "セッションを作成しています。少しお待ちください。" : ""}</p>
             <input
               type="text"
+              maxLength={200}
               placeholder="セッション名（例：線形代数 第3回）"
               value={title}
               onChange={(e) => setTitle(e.target.value)}

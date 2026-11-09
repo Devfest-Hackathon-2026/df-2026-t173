@@ -1,12 +1,13 @@
 "use client";
 
+import { getSessionTitle, watchEntries, sessionError, saveSessionEntries } from "@/lib/session-store";
+
 import { useEffect, useState, useCallback, use } from "react";
-import { doc, getDoc, collection, addDoc, onSnapshot, query, orderBy, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import ImageUploader from "@/components/ImageUploader";
 import LiveCapture from "@/components/LiveCapture";
 import VideoUploader from "@/components/VideoUploader";
 import Timeline, { type TimelineEntry } from "@/components/Timeline";
+import ContentAssistant from "@/components/ContentAssistant";
 
 interface GeminiEntry {
   type: "math" | "text" | "graph";
@@ -26,41 +27,23 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   const [mode, setMode] = useState<"image" | "live" | "video">("image");
 
   useEffect(() => {
-    getDoc(doc(db, "sessions", id)).then((snap) => {
-      if (snap.exists()) setTitle(snap.data().title);
-    });
-  }, [id]);
-
-  useEffect(() => {
-    const q = query(collection(db, "sessions", id, "entries"), orderBy("order", "asc"));
-    const unsub = onSnapshot(q, (snap) => {
-      setEntries(
-        snap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-          createdAt: (d.data().createdAt as Timestamp)?.toMillis?.() ?? Date.now(),
-        })) as TimelineEntry[]
-      );
-    });
-    return unsub;
+    let active = true;
+    getSessionTitle(id).then((value) => { if (active) setTitle(value); })
+      .catch((error) => { if (active) setError(sessionError(error)); });
+    const unsubscribe = watchEntries(id, (value) => { if (active) setEntries(value); },
+      (error) => { if (active) setError(sessionError(error)); });
+    return () => { active = false; unsubscribe(); };
   }, [id]);
 
   const saveEntries = useCallback(
     async (geminiEntries: GeminiEntry[]) => {
-      const entriesRef = collection(db, "sessions", id, "entries");
       const startOrder = entries.length;
-      for (let i = 0; i < geminiEntries.length; i++) {
-        const entry = geminiEntries[i];
-        await addDoc(entriesRef, {
-          type: entry.type,
-          latex: entry.latex,
-          description: entry.description,
-          ...(entry.reading ? { reading: entry.reading } : {}),
-          ...(entry.data ? { data: entry.data } : {}),
-          order: startOrder + i,
-          createdAt: Timestamp.now(),
-        });
-      }
+      await saveSessionEntries(id, geminiEntries.map((entry, index) => ({
+        type: entry.type, latex: entry.latex, description: entry.description,
+        ...(entry.reading ? { reading: entry.reading } : {}),
+        ...(entry.data ? { data: entry.data } : {}),
+        order: startOrder + index,
+      })));
     },
     [id, entries.length]
   );
@@ -93,7 +76,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
   );
 
   const handleLiveResult = useCallback(
-    (liveEntries: GeminiEntry[]) => { saveEntries(liveEntries); },
+    (liveEntries: GeminiEntry[]) => { void saveEntries(liveEntries).catch((error) => setError(sessionError(error))); },
     [saveEntries]
   );
 
@@ -153,7 +136,7 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
       )}
 
       {error && (
-        <div className="mt-4 p-3 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 rounded-lg text-sm">
+        <div role="alert" className="mt-4 p-3 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 rounded-lg text-sm">
           {error}
         </div>
       )}
@@ -171,6 +154,10 @@ export default function SessionPage({ params }: { params: Promise<{ id: string }
         </div>
         <Timeline entries={entriesWithImages} />
       </section>
+
+      <div className="mt-8">
+        <ContentAssistant entries={entries} />
+      </div>
     </div>
   );
 }
