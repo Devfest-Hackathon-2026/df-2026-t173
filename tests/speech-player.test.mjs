@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { beforeEach, afterEach, test } from 'node:test';
 import { setImmediate as tick } from 'node:timers/promises';
-import { loadTypescript } from './helpers/load-typescript.mjs';
+import { loadTypescript, typescriptModuleUrl } from './helpers/load-typescript.mjs';
+
+const japaneseSpeechUrl = await typescriptModuleUrl(new URL('../src/lib/japanese-math-speech.ts', import.meta.url));
+const playerImports = { '"@/lib/japanese-math-speech"': JSON.stringify(japaneseSpeechUrl) };
 
 let player;
 let audios;
@@ -62,7 +65,7 @@ beforeEach(async () => {
   globalThis.SpeechSynthesisUtterance = class { constructor(text) { this.text = text; } };
   globalThis.speechSynthesis = { cancel() {}, speak: (utterance) => utterances.push(utterance) };
   globalThis.fetch = async () => { events.push('fetch'); calls++; return wav(); };
-  player = await loadTypescript(new URL('../src/lib/speech-player.ts', import.meta.url));
+  player = await loadTypescript(new URL('../src/lib/speech-player.ts', import.meta.url), playerImports);
 });
 afterEach(() => player.stopSpeech());
 
@@ -134,7 +137,8 @@ test('structure exploration stops Google playback and uses the selected speed', 
   player.speakExploration('StartFraction');
   await finished;
   assert.equal(audios[0].paused, true);
-  assert.equal(utterances[0].lang, 'en-US');
+  assert.equal(utterances[0].lang, 'ja-JP');
+  assert.ok(utterances[0].text.includes('分数の始まり'));
   assert.equal(utterances[0].rate, 1.8);
   assert.equal(player.getSpeechSnapshot().id, 'math-exploration');
 });
@@ -144,7 +148,7 @@ test('API errors are visible and users can explicitly choose device speech', asy
   await player.toggleGoogleSpeech('first', '説明');
   assert.equal(player.getSpeechSnapshot().error, '利用上限です');
   assert.equal(utterances.length, 0);
-  player.toggleLocalSpeech('first', '説明', 'ja-JP');
+  player.toggleLocalSpeech('first', '説明');
   assert.equal(utterances[0].lang, 'ja-JP');
   assert.equal(player.getSpeechSnapshot().error, '');
 });
@@ -190,7 +194,7 @@ test('speed is bounded and restored when reopening the app', async () => {
   player.setSpeechRate(0);
   assert.equal(player.getSpeechRate(), 0.5);
   player.setSpeechRate(NaN);
-  const reopened = await loadTypescript(new URL('../src/lib/speech-player.ts', import.meta.url));
+  const reopened = await loadTypescript(new URL('../src/lib/speech-player.ts', import.meta.url), playerImports);
   assert.equal(reopened.getSpeechRate(), 0.5);
 });
 
@@ -277,8 +281,16 @@ test('merged pronunciation cleanup retains older Japanese reading scripts', () =
 
 test('Japanese structure exploration uses the shared player and selected speed', () => {
   player.setSpeechRate(1.4);
-  player.speakExploration('えっくす の にじょう', 'ja-JP');
+  player.speakExploration('えっくす の にじょう');
   assert.equal(utterances[0].lang, 'ja-JP');
   assert.equal(utterances[0].rate, 1.4);
   assert.equal(player.getSpeechSnapshot().id, 'math-exploration');
+});
+
+test('the structure button converts raw SRE speech and always chooses Japanese', () => {
+  player.toggleStructuralSpeech('structure', 'StartFraction x Over 2 EndFraction');
+  assert.equal(utterances[0].lang, 'ja-JP');
+  assert.ok(utterances[0].text.includes('分子、エックス'));
+  assert.ok(utterances[0].text.includes('分母、2'));
+  assert.ok(!/[a-z]/i.test(utterances[0].text));
 });

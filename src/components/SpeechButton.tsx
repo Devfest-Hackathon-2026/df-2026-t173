@@ -3,7 +3,7 @@
 import { useEffect, useId, useSyncExternalStore } from "react";
 import {
   getSpeechSnapshot, getServerSpeechSnapshot, subscribeSpeech,
-  stopSpeech, toggleGoogleSpeech, toggleLocalSpeech,
+  stopSpeech, toggleGoogleSpeech, toggleLocalSpeech, toggleStructuralSpeech,
 } from "@/lib/speech-player";
 
 interface Props {
@@ -33,13 +33,13 @@ export default function SpeechButton({ text, structuralText }: Props) {
           {loading ? "⏹ 生成をキャンセル" : preparing ? "⏹ 準備をキャンセル" : active ? "⏹ 停止" : "🔊 読み上げ"}
         </button>
         {structuralText && (
-          <button type="button" onClick={() => toggleLocalSpeech(id, structuralText, "en-US")}
-            aria-label={active ? "読み上げ停止" : "端末の音声で構造的に読み上げ（英語）"}
+          <button type="button" onClick={() => toggleStructuralSpeech(id, structuralText)}
+            aria-label={active ? "読み上げ停止" : "数式の構造を日本語で読み上げ"}
             className="px-3 py-1 text-sm rounded-md bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800 transition-colors">
             {active ? "⏹ 停止" : "🔊 構造読み"}
           </button>
         )}
-        {error && <button type="button" onClick={() => toggleLocalSpeech(id, text, "ja-JP")}
+        {error && <button type="button" onClick={() => toggleLocalSpeech(id, text)}
           className="text-sm underline">端末の音声で読む</button>}
       </div>
       <p role="status" aria-atomic="true" className="text-xs text-zinc-500">{loading ? "Googleの音声を生成しています…" : preparing ? "音声を再生する準備をしています…" : ""}</p>

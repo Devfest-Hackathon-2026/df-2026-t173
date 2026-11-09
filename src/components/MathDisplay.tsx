@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import SpeechButton from "./SpeechButton";
 import GraphSonifier from "./GraphSonifier";
+import { japaneseStructuralSpeech } from "@/lib/japanese-math-speech";
 
 declare global {
   interface Window {
@@ -43,7 +44,10 @@ export default function MathDisplay({ latex, description, reading, type, imageUr
       if (containerRef.current) {
         const speechEl = containerRef.current.querySelector("[data-semantic-speech]");
         if (speechEl) {
-          setStructuralSpeech(speechEl.getAttribute("data-semantic-speech") || "");
+          const japanese = japaneseStructuralSpeech(speechEl.getAttribute("data-semantic-speech") || "");
+          setStructuralSpeech(japanese);
+          speechEl.setAttribute("aria-label", japanese);
+          speechEl.setAttribute("lang", "ja");
         }
       }
     };

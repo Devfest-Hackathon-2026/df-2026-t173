@@ -1,3 +1,5 @@
+import { japaneseStructuralSpeech } from "@/lib/japanese-math-speech";
+
 type SpeechState = {
   id: string | null;
   status: "idle" | "loading" | "preparing" | "playing";
@@ -249,7 +251,7 @@ export async function toggleGoogleSpeech(id: string, text: string) {
   }
 }
 
-export function toggleLocalSpeech(id: string, text: string, lang: string) {
+export function toggleLocalSpeech(id: string, text: string) {
   if (state.id === id && state.status !== "idle") { stopSpeech(); return; }
   stopSpeech();
   if (typeof speechSynthesis === "undefined") {
@@ -257,8 +259,8 @@ export function toggleLocalSpeech(id: string, text: string, lang: string) {
     return;
   }
   const ticket = generation;
-  const utterance = new SpeechSynthesisUtterance(lang === "ja-JP" ? normalizeJapaneseSpeech(text) : text);
-  utterance.lang = lang;
+  const utterance = new SpeechSynthesisUtterance(normalizeJapaneseSpeech(text));
+  utterance.lang = "ja-JP";
   utterance.rate = getSpeechRate();
   utterance.onend = () => { if (ticket === generation) stopSpeech(); };
   utterance.onerror = () => {
@@ -270,9 +272,13 @@ export function toggleLocalSpeech(id: string, text: string, lang: string) {
   speechSynthesis.speak(utterance);
 }
 
-export function speakExploration(text: string, lang = "en-US") {
+export function toggleStructuralSpeech(id: string, text: string) {
+  toggleLocalSpeech(id, japaneseStructuralSpeech(text));
+}
+
+export function speakExploration(text: string) {
   stopSpeech();
-  toggleLocalSpeech("math-exploration", text, lang);
+  toggleStructuralSpeech("math-exploration", text);
 }
 
 // Preserve pronunciation cleanup for scripts created before the Google TTS migration.
