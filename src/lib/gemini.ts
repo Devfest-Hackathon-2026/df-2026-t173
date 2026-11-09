@@ -120,7 +120,7 @@ export async function extractFromVideo(videoBuffer: Buffer, mimeType: string): P
     }
 
     const result = await ai.models.generateContent({
-      model: "gemini-3.1-flash",
+      model: "gemini-3.1-flash-lite",
       contents: [
         {
           role: "user",
