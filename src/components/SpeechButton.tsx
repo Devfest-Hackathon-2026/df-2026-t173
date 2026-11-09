@@ -1,6 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+// Only one button owns speech playback at a time.
+let activeOwner: object | null = null;
+let activeStop: (() => void) | null = null;
 
 interface Props {
   text: string;
@@ -10,22 +14,55 @@ interface Props {
 export default function SpeechButton({ text, structuralText }: Props) {
   const [speaking, setSpeaking] = useState(false);
 
+  const ownerRef = useRef<object>({});
+  const runRef = useRef(0);
+  const playingRef = useRef(false);
+
+  const stop = useCallback(() => {
+    runRef.current += 1;
+    playingRef.current = false;
+    setSpeaking(false);
+    if (activeOwner === ownerRef.current) {
+      activeOwner = null;
+      activeStop = null;
+      speechSynthesis.cancel();
+    }
+  }, []);
+
+  useEffect(() => () => stop(), [stop]);
+
   const speak = useCallback(
     (content: string, lang: string) => {
-      if (speaking) {
-        speechSynthesis.cancel();
-        setSpeaking(false);
+      if (playingRef.current) {
+        stop();
         return;
       }
-      const utterance = new SpeechSynthesisUtterance(content);
+      activeStop?.();
+      speechSynthesis.cancel();
+      // A single utterance avoids startup gaps between synthesized fragments.
+      // Accept older [間] scripts too, but let punctuation control their pacing.
+      const spoken = (lang === "ja-JP"
+        ? content.replace(/\[間\]/g, "、").replace(/[=＝]/g, "いこーる")
+        : content
+      ).replace(/、(?:[\s、])*/g, "、").trim();
+      if (!spoken) return;
+      activeStop = stop;
+      activeOwner = ownerRef.current;
+      const run = ++runRef.current;
+      playingRef.current = true;
+      setSpeaking(true);
+      const utterance = new SpeechSynthesisUtterance(spoken);
       utterance.lang = lang;
       utterance.rate = 0.9;
-      utterance.onend = () => setSpeaking(false);
-      utterance.onerror = () => setSpeaking(false);
-      setSpeaking(true);
+      utterance.onend = () => {
+        if (runRef.current === run) stop();
+      };
+      utterance.onerror = () => {
+        if (runRef.current === run) stop();
+      };
       speechSynthesis.speak(utterance);
     },
-    [speaking]
+    [stop]
   );
 
   return (
