@@ -156,7 +156,7 @@ export default function StudentSession({ sessionId }: { sessionId: string }) {
         )}
       </section>
 
-      <main role="list" aria-label="講義タイムライン" className="space-y-6"
+      <section id="main-content" role="list" aria-label="講義タイムライン" className="space-y-6"
         onFocusCapture={(event) => {
           if (!movingFocus.current) setMode(false);
           const card = (event.target as HTMLElement).closest<HTMLElement>("[data-entry-id]");
@@ -196,7 +196,7 @@ export default function StudentSession({ sessionId }: { sessionId: string }) {
             </div>
           );
         })}
-      </main>
+      </section>
 
       <div className="mt-8" onFocusCapture={() => setMode(false)}>
         <ContentAssistant key={target?.id ?? "lecture"} entries={target ? [target] : entries}

@@ -9,7 +9,7 @@ const FEATURES = [
     title: "数式の構造ナビゲーション",
     desc: "分子・分母・ルートの中を矢印キーで自由に辿れる。スクリーンリーダーの一列読みとは別次元の理解",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8" aria-hidden="true">
         <path d="M4 6h16M4 12h8m-8 6h16" strokeLinecap="round" />
         <path d="M16 10l2 2-2 2m2-2H13" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -19,7 +19,7 @@ const FEATURES = [
     title: "資料からそのまま学習",
     desc: "自分で画像や動画を取り込み、同じ画面で数式を読む・質問する・メモする。カメラでの取り込みにも対応",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8" aria-hidden="true">
         <path d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9A2.25 2.25 0 004.5 18.75z" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
@@ -28,7 +28,7 @@ const FEATURES = [
     title: "グラフの音響化",
     desc: "関数のグラフを音の高さと左右のパンで体感。y=x²の放物線が耳で分かる",
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8" aria-hidden="true">
         <path d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25h2.24z" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
@@ -143,7 +143,7 @@ export default function Home() {
                   <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{s.detail}</p>
                 </div>
                 {i < STEPS.length - 1 && (
-                  <svg className="hidden md:block w-6 h-6 text-zinc-300 dark:text-zinc-600 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <svg className="hidden md:block w-6 h-6 text-zinc-300 dark:text-zinc-600 mt-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                     <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
@@ -153,7 +153,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 px-4">
+      <section id="main-content" className="py-16 px-4">
         <div className="max-w-md mx-auto space-y-6 text-center">
           <h2 className="text-2xl font-bold">学習を始める</h2>
           <p className="text-sm text-zinc-500">講義名を入力して、自分の学習ページを作成</p>
