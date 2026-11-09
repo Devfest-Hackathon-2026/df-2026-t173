@@ -1,0 +1,19 @@
+runConfig:
+  maxInstances: 2
+  memoryMiB: 512
+
+env:
+  - variable: GEMINI_API_KEY
+    secret: GEMINI_API_KEY
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: AIzaSyDBOVdx-QVI1LPtkjWTq6DWNex24GzKVqo
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: hackathon-f647e.firebaseapp.com
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: hackathon-f647e
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: hackathon-f647e.firebasestorage.app
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "388117145502"
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:388117145502:web:4b8a52da6a2615990c188f"
