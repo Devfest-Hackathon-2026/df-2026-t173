@@ -8,7 +8,10 @@ declare global {
   interface Window {
     MathJax?: {
       typesetPromise?: (elements?: HTMLElement[]) => Promise<void>;
-      startup?: { promise: Promise<void> };
+      startup?: { promise?: Promise<void>; defaultReady?: () => void; typeset?: boolean; ready?: () => void };
+      tex?: Record<string, unknown>;
+      options?: Record<string, unknown>;
+      loader?: Record<string, unknown>;
     };
   }
 }

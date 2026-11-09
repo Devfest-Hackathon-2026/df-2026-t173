@@ -81,7 +81,7 @@ export default function LiveCapture({ onResult }: Props) {
       };
       ws.send(JSON.stringify(setup));
       setActive(true);
-      setStatus("ライブ配信中");
+      setStatus("カメラで取り込み中");
 
       intervalRef.current = setInterval(() => {
         if (!canvasRef.current || !videoRef.current || ws.readyState !== WebSocket.OPEN) return;
@@ -132,7 +132,7 @@ export default function LiveCapture({ onResult }: Props) {
               : "bg-green-500 text-white hover:bg-green-600"
           }`}
         >
-          {active ? "⏹ ライブ停止" : "📹 ライブ開始"}
+          {active ? "⏹ 取り込みを停止" : "📹 カメラで取り込み開始"}
         </button>
         <span className={`text-sm ${active ? "text-green-600" : "text-zinc-500"}`}>
           {active && "● "}{status}

@@ -3,7 +3,7 @@
 import { useCallback, useRef, useState } from "react";
 
 interface Props {
-  onResult: (entries: { type: "math" | "text" | "graph"; latex: string; description: string; timestamp?: string; data?: { x: number; y: number }[] }[]) => void;
+  onResult: (entries: { type: "math" | "text" | "graph"; latex: string; description: string; timestamp?: string; data?: { x: number; y: number }[] }[]) => void | Promise<void>;
 }
 
 export default function VideoUploader({ onResult }: Props) {
@@ -13,6 +13,7 @@ export default function VideoUploader({ onResult }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(async (file: File) => {
+    if (status === "processing" || status === "uploading") return;
     if (!file.type.startsWith("video/")) {
       setError("動画ファイルを選択してください");
       return;
@@ -37,21 +38,33 @@ export default function VideoUploader({ onResult }: Props) {
         throw new Error(data.error || "動画の処理に失敗しました");
       }
       const data = await res.json();
-      setStatus("done");
       if (data.entries?.length > 0) {
-        onResult(data.entries);
+        await onResult(data.entries);
+      } else {
+        throw new Error("数式やテキストが見つかりませんでした。別の動画でお試しください。");
       }
+      setStatus("done");
     } catch (e) {
       setError(e instanceof Error ? e.message : "エラーが発生しました");
       setStatus("error");
     }
-  }, [onResult]);
+  }, [onResult, status]);
 
   return (
     <div className="space-y-4">
       <div
+        role="button"
+        tabIndex={status === "processing" || status === "uploading" ? -1 : 0}
+        aria-label="学習する動画を選択"
+        aria-disabled={status === "processing" || status === "uploading"}
+        onKeyDown={(event) => {
+          if (status !== "processing" && status !== "uploading" && (event.key === "Enter" || event.key === " ")) {
+            event.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
         className="border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-lg p-8 text-center cursor-pointer hover:border-blue-400 transition-colors"
-        onClick={() => inputRef.current?.click()}
+        onClick={() => { if (status !== "processing" && status !== "uploading") inputRef.current?.click(); }}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-10 h-10 mx-auto text-zinc-400 mb-2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-8.625 0V5.625m0 0A1.125 1.125 0 013.375 4.5h17.25c.621 0 1.125.504 1.125 1.125m-21.75 0v1.5c0 .621.504 1.125 1.125 1.125M21.75 5.625v12.75m0-12.75v1.5c0 .621-.504 1.125-1.125 1.125m1.125-2.625c0-.621-.504-1.125-1.125-1.125" />
@@ -64,7 +77,10 @@ export default function VideoUploader({ onResult }: Props) {
           type="file"
           accept="video/*"
           className="hidden"
-          onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+          onChange={(e) => {
+            if (e.target.files?.[0]) void handleFile(e.target.files[0]);
+            e.target.value = "";
+          }}
         />
       </div>
 

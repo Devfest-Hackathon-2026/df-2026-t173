@@ -16,8 +16,8 @@ const FEATURES = [
     ),
   },
   {
-    title: "リアルタイム共有",
-    desc: "教師がスライドを撮影→数式がリアルタイムで学生端末に。カメラのライブ配信にも対応",
+    title: "資料からそのまま学習",
+    desc: "自分で画像や動画を取り込み、同じ画面で数式を読む・質問する・メモする。カメラでの取り込みにも対応",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-8 h-8">
         <path d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0013.5 5.25h-9A2.25 2.25 0 002.25 7.5v9A2.25 2.25 0 004.5 18.75z" strokeLinecap="round" strokeLinejoin="round" />
@@ -36,9 +36,9 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { num: "1", label: "撮影・アップロード", detail: "講義スライドを撮影、動画をアップロード、またはカメラでライブ配信" },
+  { num: "1", label: "撮影・アップロード", detail: "手元の講義スライドや動画をアップロード、またはカメラで板書を取り込む" },
   { num: "2", label: "Gemini が解析", detail: "画像/動画からLaTeX数式・テキスト・グラフの座標を自動抽出" },
-  { num: "3", label: "構造的に理解", detail: "学生が数式の内部構造をキーボードで辿り、音声とグラフ音響で学ぶ" },
+  { num: "3", label: "構造的に理解", detail: "同じ画面で数式をキーボードで辿り、質問・ブックマーク・メモで理解を深める" },
 ];
 
 export default function Home() {
@@ -69,15 +69,15 @@ export default function Home() {
     if (!mathRef.current) return;
     const el = mathRef.current;
     const typeset = async () => {
-      const mj = (window as any).MathJax;
+      const mj = window.MathJax;
       if (mj?.startup) await mj.startup.promise;
       if (mj?.typesetPromise) await mj.typesetPromise([el]);
     };
-    if ((window as any).MathJax?.typesetPromise) {
+    if (window.MathJax?.typesetPromise) {
       typeset();
     } else {
       const id = setInterval(() => {
-        if ((window as any).MathJax?.typesetPromise) {
+        if (window.MathJax?.typesetPromise) {
           clearInterval(id);
           typeset();
         }
@@ -155,27 +155,27 @@ export default function Home() {
 
       <section className="py-16 px-4">
         <div className="max-w-md mx-auto space-y-6 text-center">
-          <h2 className="text-2xl font-bold">セッションを始める</h2>
-          <p className="text-sm text-zinc-500">講義名を入力して、数式共有セッションを作成</p>
+          <h2 className="text-2xl font-bold">学習を始める</h2>
+          <p className="text-sm text-zinc-500">講義名を入力して、自分の学習ページを作成</p>
           <div className="space-y-3">
             {error && <p role="alert" className="rounded-lg border border-red-600 p-3 text-red-700 dark:text-red-300">{error}</p>}
-            <p role="status" aria-atomic="true" className="sr-only">{creating ? "セッションを作成しています。少しお待ちください。" : ""}</p>
+            <p role="status" aria-atomic="true" className="sr-only">{creating ? "学習ページを作成しています。少しお待ちください。" : ""}</p>
             <input
               type="text"
               maxLength={200}
-              placeholder="セッション名（例：線形代数 第3回）"
+              placeholder="講義名（例：線形代数 第3回）"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && createSession()}
               className="w-full px-4 py-3 border border-[var(--surface-border)] rounded-lg bg-[var(--surface)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-shadow"
-              aria-label="セッション名"
+              aria-label="講義名"
             />
             <button
               onClick={createSession}
               disabled={!title.trim() || creating}
               className="w-full py-3 bg-[var(--accent)] text-white rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
             >
-              {creating ? "作成中..." : "セッションを作成"}
+              {creating ? "作成中..." : "学習を始める"}
             </button>
           </div>
         </div>

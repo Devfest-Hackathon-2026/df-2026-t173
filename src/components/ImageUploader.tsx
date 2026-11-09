@@ -3,26 +3,28 @@
 import { useCallback, useRef, useState } from "react";
 
 interface Props {
-  onUpload: (base64: string, mimeType: string) => void;
+  onUpload: (base64: string, mimeType: string, name: string) => void;
   isLoading: boolean;
+  hasImages?: boolean;
 }
 
-export default function ImageUploader({ onUpload, isLoading }: Props) {
+export default function ImageUploader({ onUpload, isLoading, hasImages = false }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const processFile = useCallback(
     (file: File) => {
+      if (isLoading) return;
       if (!file.type.startsWith("image/")) return;
       const reader = new FileReader();
       reader.onload = () => {
         const dataUrl = reader.result as string;
         const base64 = dataUrl.split(",")[1];
-        onUpload(base64, file.type);
+        onUpload(base64, file.type, file.name);
       };
       reader.readAsDataURL(file);
     },
-    [onUpload]
+    [onUpload, isLoading]
   );
 
   const handleDrop = useCallback(
@@ -37,13 +39,23 @@ export default function ImageUploader({ onUpload, isLoading }: Props) {
 
   return (
     <div
+      role="button"
+      tabIndex={isLoading ? -1 : 0}
+      aria-label={hasImages ? "画像を追加（カメラ撮影も可）" : "学習する画像を選択（カメラ撮影も可）"}
+      aria-disabled={isLoading}
+      onKeyDown={(event) => {
+        if (!isLoading && (event.key === "Enter" || event.key === " ")) {
+          event.preventDefault();
+          inputRef.current?.click();
+        }
+      }}
       onDragOver={(e) => {
         e.preventDefault();
         setDragOver(true);
       }}
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
-      onClick={() => inputRef.current?.click()}
+      onClick={() => { if (!isLoading) inputRef.current?.click(); }}
       className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
         dragOver
           ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
@@ -72,7 +84,7 @@ export default function ImageUploader({ onUpload, isLoading }: Props) {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-10 h-10 mx-auto text-zinc-400 mb-2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" />
           </svg>
-          <p className="text-lg font-medium">画像をドラッグ&ドロップ</p>
+          <p className="text-lg font-medium">{hasImages ? "＋ 画像を追加" : "画像をドラッグ&ドロップ"}</p>
           <p className="text-sm text-zinc-500 mt-1">またはクリックして選択（カメラ撮影も可）</p>
         </>
       )}

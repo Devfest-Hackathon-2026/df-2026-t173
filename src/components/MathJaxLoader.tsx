@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
+import { speakExploration } from "@/lib/speech-player";
 
 export default function MathJaxLoader() {
   useEffect(() => {
     if (window.MathJax) return;
 
-    (window as any).MathJax = {
+    window.MathJax = {
       tex: {
         inlineMath: [["$", "$"]],
         displayMath: [["$$", "$$"]],
@@ -36,7 +37,7 @@ export default function MathJaxLoader() {
       startup: {
         typeset: false,
         ready: () => {
-          (window as any).MathJax.startup.defaultReady();
+          window.MathJax?.startup?.defaultReady?.();
           setupSpeechOnExplore();
         },
       },
@@ -53,8 +54,6 @@ export default function MathJaxLoader() {
 }
 
 function setupSpeechOnExplore() {
-  let currentUtterance: SpeechSynthesisUtterance | null = null;
-
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.type !== "childList") continue;
@@ -65,11 +64,7 @@ function setupSpeechOnExplore() {
         const text = live.textContent?.trim();
         if (!text) continue;
 
-        if (currentUtterance) speechSynthesis.cancel();
-        currentUtterance = new SpeechSynthesisUtterance(text);
-        currentUtterance.lang = "en-US";
-        currentUtterance.rate = 1.1;
-        speechSynthesis.speak(currentUtterance);
+        speakExploration(text);
       }
     }
   });
