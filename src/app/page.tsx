@@ -51,12 +51,13 @@ export default function Home() {
   const mathRef = useRef<HTMLDivElement>(null);
 
   const createSession = async () => {
-    if (!title.trim() || pending.current) return;
+    if (pending.current) return;
     pending.current = true;
     setCreating(true);
     setError("");
     try {
-      const id = await saveSession(title.trim());
+      const name = title.trim() || `セッション ${new Date().toLocaleDateString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}`;
+      const id = await saveSession(name);
       router.push(`/session/${id}`);
     } catch (error) {
       setError(sessionError(error));
@@ -179,7 +180,7 @@ export default function Home() {
       <section id="main-content" className="py-16 px-4">
         <div className="max-w-md mx-auto space-y-6 text-center">
           <h2 className="text-2xl font-bold">学習を始める</h2>
-          <p className="text-sm text-zinc-500">講義名を入力して、自分の学習ページを作成</p>
+          <p className="text-sm text-zinc-500">そのまま始めるか、講義名を入力して学習ページを作成</p>
           <div className="space-y-3">
             {error && <p role="alert" className="rounded-lg border border-red-600 p-3 text-red-700 dark:text-red-300">{error}</p>}
             <p role="status" aria-atomic="true" className="sr-only">{creating ? "学習ページを作成しています。少しお待ちください。" : ""}</p>
@@ -195,7 +196,7 @@ export default function Home() {
             />
             <button
               onClick={createSession}
-              disabled={!title.trim() || creating}
+              disabled={creating}
               className="w-full py-3 bg-[var(--accent)] text-white rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
             >
               {creating ? "作成中..." : "学習を始める"}
