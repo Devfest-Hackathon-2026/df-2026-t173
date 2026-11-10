@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function ownsSession(sessionId) {
+      return signedIn() &&
+        get(/databases/$(database)/documents/sessions/$(sessionId)).data.ownerId == request.auth.uid;
+    }
+    match /sessions/{sessionId} {
+      // A shared session URL grants viewing; discovering all sessions is disabled.
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['title', 'ownerId', 'createdAt'])
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 200
+        && request.resource.data.createdAt is timestamp;
+      allow update, delete: if false;
+      match /entries/{entryId} {
+        allow read: if signedIn()
+          && exists(/databases/$(database)/documents/sessions/$(sessionId));
+        allow create: if ownsSession(sessionId)
+          && request.resource.data.keys().hasOnly(['type', 'latex', 'description', 'order', 'createdAt', 'reading', 'data', 'timestamp'])
+          && request.resource.data.type in ['math', 'text', 'graph', 'narration']
+          && request.resource.data.latex is string
+          && request.resource.data.description is string
+          && request.resource.data.get('reading', '') is string
+          && request.resource.data.get('timestamp', '') is string
+          && request.resource.data.get('data', []) is list
+          && request.resource.data.get('data', []).size() <= 1000
+          && request.resource.data.order is int
+          && request.resource.data.order >= 0
+          && request.resource.data.createdAt is timestamp;
+        allow update, delete: if false;
+      }
+    }
+  }
+}
