@@ -481,23 +481,23 @@ export default function DemoPage() {
 
       {/* ── OCRとの違い ── */}
       <Narration
-        speech="GeminiにOCRさせれば同じことができるのでは、と思うかもしれません。いいえ。OCRと読み上げは一方向の朗読です。今体験したように、MathVoiceは数式の構造を自由に辿れます。分子だけ、分母だけ、ルートの中だけを確認できる。これが違いです。"
+        speech="AIに文字を読み取らせて読み上げる方法との違いを紹介します。その方法では、数式を始めから終わりまで順に読み上げます。MathVoiceでは、今体験したように、分子だけ、分母だけ、ルートの中だけと、数式の構造をたどりながら確認できます。"
         className="space-y-4"
       >
         <h2 className="text-xl font-bold">
-          「GeminiにOCRさせて読めばいいのでは？」
+          AIで文字を読み取って読み上げる方法との違いは？
         </h2>
         <div className="p-5 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-4">
           <p className="text-sm leading-relaxed">
-            Geminiで数式画像をOCRし読み上げることはできます。しかしそれは
-            <strong>「朗読」</strong>です。
+            AIで数式の画像を読み取り、そのまま読み上げることもできます。その場合は、数式を
+            <strong>始めから終わりまで順に読む</strong>形になります。
           </p>
           <div className="grid md:grid-cols-2 gap-4">
             <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 space-y-2">
               <p className="font-semibold text-sm">OCR + 読み上げ</p>
               <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-1">
                 <li>一方向に全部読む</li>
-                <li>「分母だけ聞きたい」→ 無理</li>
+                <li>分母だけを聞き直すのは難しい</li>
                 <li>入れ子が深いと構造を見失う</li>
                 <li>聞くだけ、質問できない</li>
               </ul>
