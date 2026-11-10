@@ -277,7 +277,7 @@ export function toggleStructuralSpeech(id: string, text: string) {
 
 export function speakExploration(text: string) {
   stopSpeech();
-  toggleStructuralSpeech("math-exploration", text);
+  void toggleGoogleSpeech("math-exploration", text);
 }
 
 // Preserve pronunciation cleanup for scripts created before the Google TTS migration.

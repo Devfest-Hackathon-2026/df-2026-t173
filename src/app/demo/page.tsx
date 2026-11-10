@@ -4,12 +4,14 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import MathDisplay from "@/components/MathDisplay";
 import ContentAssistant from "@/components/ContentAssistant";
 import type { TimelineEntry } from "@/components/Timeline";
+import { stopSpeech as stopPlayerSpeech } from "@/lib/speech-player";
 
 /* ━━ Speech ━━ */
 
 function speakJa(...texts: string[]) {
   if (typeof speechSynthesis === "undefined") return;
   speechSynthesis.cancel();
+  stopPlayerSpeech();
   for (const text of texts) {
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "ja-JP";
@@ -18,8 +20,9 @@ function speakJa(...texts: string[]) {
   }
 }
 
-function stopSpeech() {
+function stopAllSpeech() {
   if (typeof speechSynthesis !== "undefined") speechSynthesis.cancel();
+  stopPlayerSpeech();
 }
 
 /* ━━ Narration: Tab focus → auto-speak ━━ */
@@ -37,11 +40,12 @@ function Narration({
   return (
     <div
       tabIndex={0}
+      data-narration=""
       onFocus={(e) => {
         if (e.target === e.currentTarget) speakJa(...texts);
       }}
       onBlur={(e) => {
-        if (e.target === e.currentTarget) stopSpeech();
+        if (e.target === e.currentTarget) stopAllSpeech();
       }}
       className={`focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-zinc-950 rounded-xl transition-shadow ${className}`}
     >
@@ -259,26 +263,30 @@ export default function DemoPage() {
     }
   }, [extracted, videoRevealed]);
 
-  // Speak description when MathJax formula gets focus in After section
+  // Speak ALL focused elements: buttons, links, formulas, etc.
   useEffect(() => {
     const handler = (e: FocusEvent) => {
-      const target = e.target as HTMLElement;
-      const section = afterRef.current;
-      if (!section?.contains(target)) return;
-      if (
-        target.tagName.toLowerCase() !== "mjx-container" &&
-        target.getAttribute("role") !== "application"
-      )
-        return;
-      const app =
-        target.querySelector('[role="application"]') || target;
-      const label = app.getAttribute("aria-label");
-      if (label) {
-        speakJa(
-          label +
-            "。Enterキーで中に入り、矢印キーで構造を辿れます。",
-        );
+      const el = e.target as HTMLElement;
+      if (el.hasAttribute("data-narration")) return;
+
+      // MathJax in After section: description + instruction
+      if (afterRef.current?.contains(el)) {
+        const tag = el.tagName.toLowerCase();
+        if (tag === "mjx-container" || el.getAttribute("role") === "application") {
+          const app = el.querySelector('[role="application"]') || el;
+          const label = app.getAttribute("aria-label");
+          if (label) {
+            speakJa(label + "。Enterキーで中に入り、矢印キーで構造を辿れます。");
+            return;
+          }
+        }
       }
+
+      const label = el.getAttribute("aria-label");
+      if (label) { speakJa(label); return; }
+
+      const text = el.textContent?.trim();
+      if (text && text.length > 0 && text.length < 200) speakJa(text);
     };
     document.addEventListener("focusin", handler);
     return () => document.removeEventListener("focusin", handler);
