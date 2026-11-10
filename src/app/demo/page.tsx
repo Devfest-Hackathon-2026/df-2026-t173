@@ -8,9 +8,6 @@ import type { TimelineEntry } from "@/components/Timeline";
 const QUADRATIC_READING =
   "二次方程式の解の公式。エックスは、分母が2エー、分子がマイナスビー プラスマイナス ルート ビーの二乗マイナス4エーシー です。";
 
-const SRE_ENGLISH =
-  "x equals StartFraction negative b plus or minus StartSquareRoot b squared minus 4 a c EndSquareRoot Over 2 a EndFraction";
-
 const DEMO_ENTRIES: TimelineEntry[] = [
   {
     id: "demo-quadratic",
@@ -41,6 +38,73 @@ const DEMO_ENTRIES: TimelineEntry[] = [
       "2×2行列の行列式の定義です。対角成分の積 ad から、反対角成分の積 bc を引きます。",
     reading: "2かける2行列の行列式。エーディーマイナスビーシーです。",
     order: 2,
+    createdAt: 1731200000000,
+  },
+];
+
+const YOBINORI_VIDEO_ID = "po97dnBfoco";
+const YOBINORI_ENTRIES: TimelineEntry[] = [
+  {
+    id: "yobinori-1",
+    type: "math",
+    latex: "x^2 + x - 1 = 0",
+    description: "一般的な方程式の例。",
+    reading: "えっくすにじょう、たす、えっくす、ひく、いち、いこーる、ぜろ",
+    order: 0,
+    createdAt: 1731200000000,
+  },
+  {
+    id: "yobinori-2",
+    type: "math",
+    latex: "\\frac{dy}{dx} = y",
+    description: "微分方程式の例。yの微分がy自身に等しい。",
+    reading: "でぃーわい、でぃーえっくす、いこーる、わい",
+    order: 1,
+    createdAt: 1731200000000,
+  },
+  {
+    id: "yobinori-3",
+    type: "math",
+    latex: "y = Ce^x",
+    description: "微分方程式 dy/dx = y の一般解。",
+    reading: "わい、いこーる、しー、いーの、えっくすじょう",
+    order: 2,
+    createdAt: 1731200000000,
+  },
+  {
+    id: "yobinori-4",
+    type: "math",
+    latex: "y' = 2x + 3",
+    description: "例題: 簡単な微分方程式。",
+    reading: "わいぷらいむ、いこーる、にえっくす、たす、さん",
+    order: 3,
+    createdAt: 1731200000000,
+  },
+  {
+    id: "yobinori-5",
+    type: "math",
+    latex: "y = x^2 + 3x + C",
+    description: "例題の一般解。",
+    reading: "わい、いこーる、えっくすにじょう、たす、さんえっくす、たす、しー",
+    order: 4,
+    createdAt: 1731200000000,
+  },
+  {
+    id: "yobinori-6",
+    type: "math",
+    latex: "y' = ay - by^2",
+    description: "ロジスティック方程式に近い形の微分方程式。人口モデルに使われる。",
+    reading: "わいぷらいむ、いこーる、えいわい、ひく、びいわいにじょう",
+    order: 5,
+    createdAt: 1731200000000,
+  },
+  {
+    id: "yobinori-7",
+    type: "math",
+    latex: "y = y_0 e^{at}",
+    description: "マルサスの法則の解。初期値y₀から指数関数的に増加。",
+    reading: "わい、いこーる、わいぜろ、いーの、えいてぃーじょう",
+    order: 6,
     createdAt: 1731200000000,
   },
 ];
@@ -76,7 +140,7 @@ function drawBoard(canvas: HTMLCanvasElement) {
   ctx.fillText("行列式: det(A) = ad - bc", 40, 320);
 }
 
-function SpeechButton({
+function LocalSpeechButton({
   label,
   text,
   lang,
@@ -112,19 +176,6 @@ function SpeechButton({
     </button>
   );
 }
-
-const YOBINORI_VIDEO_ID = "po97dnBfoco";
-const YOBINORI_ENTRIES: TimelineEntry[] = [
-  {
-    id: "yobinori-placeholder",
-    type: "math",
-    latex: "\\frac{dy}{dx} = f(x, y)",
-    description: "微分方程式の一般形。yのxに関する微分がf(x,y)に等しいことを表します。",
-    reading: "わいのエックスにかんするびぶんは、えふかっこエックスカンマわい、にひとしい",
-    order: 0,
-    createdAt: 1731200000000,
-  },
-];
 
 export default function DemoPage() {
   const [targetId, setTargetId] = useState<string | null>(null);
@@ -222,7 +273,7 @@ export default function DemoPage() {
   const target = entries[targetIndex];
 
   return (
-    <div className="flex flex-col flex-1 max-w-3xl mx-auto w-full px-4 py-8 space-y-14">
+    <div className="flex flex-col flex-1 max-w-3xl mx-auto w-full px-4 py-8 space-y-12">
       {/* Hero */}
       <header className="text-center space-y-3">
         <h1 className="text-3xl font-bold">
@@ -233,7 +284,7 @@ export default function DemoPage() {
         </p>
       </header>
 
-      {/* ── Section 1: 共感 ── */}
+      {/* ── 共感 + Before（圧縮）── */}
       <section className="space-y-4">
         <div className="p-6 rounded-xl bg-zinc-100 dark:bg-zinc-900 space-y-4">
           <p className="text-base leading-relaxed">
@@ -242,92 +293,50 @@ export default function DemoPage() {
             <strong>あなたには、見えない。</strong>
           </p>
           <p className="text-sm text-zinc-500 leading-relaxed">
-            日本の大学には約1万人の視覚障碍のある学生がいます。
-            STEM分野の講義で数式が出てきたとき、彼らには「聞く」しか手段がありません。
-            しかし、既存のツールで数式を聞くとどうなるでしょうか？
-          </p>
-        </div>
-      </section>
-
-      {/* ── Section 2: Before ── */}
-      <section className="space-y-5">
-        <h2 className="text-xl font-bold">
-          Before: 既存の数式読み上げ
-        </h2>
-
-        <div className="p-5 rounded-xl border border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20 space-y-4">
-          <p className="text-sm font-medium">二次方程式の解の公式を聞いてみてください:</p>
-          <div className="text-center text-lg py-3">
-            {`$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$`}
-          </div>
-
-          <div className="space-y-3">
-            <div className="p-3 bg-white dark:bg-zinc-900 rounded-lg space-y-2">
-              <p className="text-xs text-zinc-500 font-medium">英語ツール（MathCAT等）の読み上げ:</p>
-              <p className="font-mono text-xs text-zinc-500 leading-relaxed">
-                &quot;{SRE_ENGLISH}&quot;
-              </p>
-              <SpeechButton label="英語で聴く" text={SRE_ENGLISH} lang="en-US" />
-            </div>
-
-            <div className="p-3 bg-white dark:bg-zinc-900 rounded-lg space-y-2">
-              <p className="text-xs text-zinc-500 font-medium">仮に日本語に訳しても — 一方向に流れるだけ:</p>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                &quot;{QUADRATIC_READING}&quot;
-              </p>
-              <SpeechButton label="日本語で聴く（線形）" text={QUADRATIC_READING} lang="ja-JP" />
-            </div>
-          </div>
-
-          <p className="text-sm text-zinc-500 leading-relaxed">
+            既存のツールで数式を「聞く」と、一方向に流れるだけ。
             「分母なんだっけ？」と思っても、最初から全部聞き直すしかありません。
-            複雑な数式になるほど、一度聞いただけでは構造が頭に入りません。
           </p>
+          <div className="p-3 bg-white dark:bg-zinc-800 rounded-lg space-y-2">
+            <p className="text-xs text-zinc-500 font-medium">
+              解の公式の読み上げ — 一方向に流れて構造が分からない:
+            </p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed italic">
+              &quot;{QUADRATIC_READING}&quot;
+            </p>
+            <LocalSpeechButton label="聴いてみる" text={QUADRATIC_READING} lang="ja-JP" />
+          </div>
         </div>
       </section>
 
-      {/* ── Section 3: After ── */}
-      <section className="space-y-5">
+      {/* ── After: 構造ナビ体験 ── */}
+      <section className="space-y-4">
         <h2 className="text-xl font-bold">
-          After: MathVoiceで数式を<em>辿る</em>
+          MathVoiceなら: 数式を<em>辿れる</em>
         </h2>
 
         <div className="p-5 rounded-xl border border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/20 space-y-4">
           <p className="text-sm leading-relaxed">
-            同じ数式を、今度は<strong>キーボードで自由に辿って</strong>みてください。
-            分子だけ、分母だけ、ルートの中だけ — 見える人が目で数式を追うように、構造の中を移動できます。
+            同じ数式を、<strong>キーボードで自由に辿って</strong>みてください。
+            分子だけ、分母だけ、ルートの中だけ — 見える人が目で追うように、構造の中を移動できます。
           </p>
 
           <div className="p-3 bg-white/60 dark:bg-zinc-800/60 rounded-lg text-sm space-y-1">
             <p className="font-medium">操作:</p>
             <ol className="list-decimal list-inside space-y-0.5 text-zinc-600 dark:text-zinc-400">
               <li>
-                下の数式に{" "}
-                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
-                  Tab
-                </kbd>{" "}
-                で移動
+                数式に{" "}
+                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">Tab</kbd>
+                {" "}で移動 →{" "}
+                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">Enter</kbd>
+                {" "}で中に入る
               </li>
               <li>
-                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
-                  Enter
-                </kbd>{" "}
-                で数式の中に入る
-              </li>
-              <li>
-                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
-                  ←
-                </kbd>{" "}
-                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
-                  →
-                </kbd>{" "}
-                で構造を辿る（日本語で読み上げ）
-              </li>
-              <li>
-                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
-                  Esc
-                </kbd>{" "}
-                で戻る
+                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">←</kbd>
+                {" "}
+                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">→</kbd>
+                {" "}で構造を辿る（日本語で読み上げ） →{" "}
+                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">Esc</kbd>
+                {" "}で戻る
               </li>
             </ol>
           </div>
@@ -365,15 +374,14 @@ export default function DemoPage() {
         </div>
       </section>
 
-      {/* ── Section 4: OCRとの違い ── */}
+      {/* ── OCRとの違い（体験直後に配置）── */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold">
           「GeminiにOCRさせて読めばいいのでは？」
         </h2>
         <div className="p-5 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-4">
           <p className="text-sm leading-relaxed">
-            Geminiや他のAIで数式画像をOCRし、結果を読み上げることはできます。
-            しかしそれは<strong>「朗読」</strong>です。
+            Geminiで数式画像をOCRし読み上げることはできます。しかしそれは<strong>「朗読」</strong>です。
           </p>
           <div className="grid md:grid-cols-2 gap-4">
             <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 space-y-2">
@@ -396,23 +404,22 @@ export default function DemoPage() {
             </div>
           </div>
           <p className="text-sm text-zinc-500">
-            晴眼者が数式を「見る」とき、分母を見て、分子に戻って、ルートの中を確認して — 自由に視線を動かしています。
-            MathVoiceはそれをキーボードで再現します。OCRは一方向のテキスト化に留まります。
+            晴眼者が数式を「見る」とき、分母→分子→ルート内と自由に視線を動かしています。
+            MathVoiceはそれをキーボードで再現します。
           </p>
         </div>
       </section>
 
-      {/* ── Section 5: Gemini解析デモ ── */}
+      {/* ── Gemini解析デモ ── */}
       <section className="space-y-5">
         <h2 className="text-xl font-bold">
-          Geminiによるリアルタイム解析
+          Geminiによる解析
         </h2>
         <p className="text-sm text-zinc-500 leading-relaxed">
           TAや友人が撮影した板書画像や講義動画を、Geminiが解析。
-          LaTeX数式・説明文・読み上げテキストを自動生成し、インタラクティブな数式に変換します。
+          LaTeX数式・説明文・読み上げテキストを自動生成し、上で体験したインタラクティブな数式に変換します。
         </p>
 
-        {/* タブ切り替え */}
         <div className="flex gap-2">
           {(["image", "video"] as const).map((tab) => (
             <button
@@ -454,20 +461,10 @@ export default function DemoPage() {
                     ? "もう一度解析する"
                     : "Geminiで解析する"}
               </button>
-              {extracting && (
-                <span className="text-sm text-zinc-500">
-                  Gemini APIに画像を送信しています...
-                </span>
-              )}
             </div>
             {extractSource === "api" && (
               <p className="text-xs text-green-600 dark:text-green-400 font-medium">
                 Gemini APIがリアルタイムに解析した結果です
-              </p>
-            )}
-            {extractSource === "fallback" && (
-              <p className="text-xs text-amber-600 dark:text-amber-400">
-                APIにアクセスできなかったため、プリセットの結果を表示しています
               </p>
             )}
             {extracted && (
@@ -507,7 +504,8 @@ export default function DemoPage() {
                 allowFullScreen
               />
             </div>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              本デモでは教材の例として以下の講義動画を使用しています。<br />
               出典:{" "}
               <a
                 href={`https://www.youtube.com/watch?v=${YOBINORI_VIDEO_ID}`}
@@ -517,22 +515,16 @@ export default function DemoPage() {
               >
                 予備校のノリで学ぶ「大学の数学・物理」— 微分方程式入門①(微分方程式とは)
               </a>
+              （ヨビノリたくみ氏）
             </p>
-            <div className="flex items-center gap-3 flex-wrap">
-              <button
-                type="button"
-                onClick={() => setVideoRevealed(true)}
-                disabled={videoRevealed}
-                className="px-5 py-2.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
-              >
-                {videoRevealed ? "解析結果を表示中" : "Geminiで解析する"}
-              </button>
-              {!videoRevealed && (
-                <span className="text-xs text-zinc-500">
-                  ※ 事前にGemini APIで解析した結果を表示します
-                </span>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => setVideoRevealed(true)}
+              disabled={videoRevealed}
+              className="px-5 py-2.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+            >
+              {videoRevealed ? "解析結果を表示中" : "Geminiで解析する"}
+            </button>
             {videoRevealed && (
               <section
                 ref={videoResultRef}
@@ -540,7 +532,7 @@ export default function DemoPage() {
                 aria-label="動画の解析結果"
                 className="space-y-4 pt-2"
               >
-                {YOBINORI_ENTRIES.filter((e) => e.type === "math").map((entry, index) => (
+                {YOBINORI_ENTRIES.map((entry, index) => (
                   <div
                     key={entry.id}
                     id={`entry-${entry.id}`}
@@ -558,13 +550,13 @@ export default function DemoPage() {
         )}
       </section>
 
-      {/* ── Section 6: Gemini Q&A ── */}
+      {/* ── Gemini Q&A ── */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold">
           Geminiに質問する
         </h2>
         <p className="text-sm text-zinc-500">
-          数式の意味、式変形の手順、変数の意味など、Geminiに自由に質問できます。
+          数式の意味、式変形の手順、変数の意味など、自由に質問できます。
         </p>
         <ContentAssistant
           key={target?.id ?? "demo"}
@@ -584,7 +576,7 @@ export default function DemoPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
           <div className="p-3 rounded-lg bg-white dark:bg-zinc-800 text-center">
             <p className="font-semibold">Gemini</p>
-            <p className="text-xs text-zinc-500">画像解析 + Q&amp;A</p>
+            <p className="text-xs text-zinc-500">画像・動画解析 + Q&amp;A</p>
           </div>
           <div className="p-3 rounded-lg bg-white dark:bg-zinc-800 text-center">
             <p className="font-semibold">Cloud TTS</p>
