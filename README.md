@@ -20,7 +20,7 @@
 
 大学の講義では、教員が黒板やスライドに数式を書きながら説明が進みます。全国の大学・短期大学・高等専門学校には、視覚障害のある学生が1,366人在籍しています[^jasso]が、板書された数式に、自分の力でその場でアクセスする手段はほとんどありません。
 
-友人に板書を撮影してもらい、OCRで文字にして読み上げさせても、数式は**一方向に流れる朗読**にしかなりません。
+友人に板書を撮影してもらい、OCRで文字にして読み上げさせると、数式は始めから終わりまで**一方向に読み上げる**形になります。
 
 > エックス イコール マイナス ビー プラスマイナス ルート ビー 2乗 マイナス 4 エー シー 割る 2 エー
 
@@ -85,9 +85,9 @@ flowchart LR
 
 | 段階 | 担当 | 理由 |
 |---|---|---|
-| 画像・動画から数式を読み取る | Gemini | 手書きや崩れた板書を、文脈ごと理解してLaTeXにできるのはマルチモーダルなAIだけです |
+| 画像・動画から数式を読み取る | Gemini | 手書きや崩れた板書でも、前後の文脈を踏まえてLaTeXに変換できるためです |
 | 読み取り結果を検査する | 規則に基づくチェック（`src/lib/latex-check.ts`）とMathJaxの組み立て | AIの出力をAIで確かめず、括弧の対応や数式として成立するかをコードで判定します。問題があれば「要確認」と表示します |
-| 数式の構造を組み立てる | MathJax＋SRE（規則に基づく処理） | 構造の木は、LaTeXから決まった規則で一意に組み立てます。AIが構造をでっち上げることはありません |
+| 数式の構造を組み立てる | MathJax＋SRE（規則に基づく処理） | 構造の木は、LaTeXから決まった規則で一意に組み立てます。AIの推測によって構造が変わることはありません |
 | 構造を日本語で読む | 自作の日本語化規則 | 同じ数式は常に同じ言葉で読まれます。耳で学ぶ学生にとって、読み方が揺れないことが重要だからです |
 | 理解できたかを判断する | 学生本人 | 元の板書画像と見比べ、分からない部分はGeminiに質問して、自分で確かめます |
 
@@ -96,16 +96,21 @@ AIの誤読は避けられません。そこで、誤読が「構造の誤り」
 ## 仕組み
 
 ```mermaid
+%%{init: {"flowchart": {"rankSpacing": 40, "nodeSpacing": 18, "padding": 8}}}%%
 flowchart LR
-    User[ブラウザ<br/>Next.js / React] --> Host[Firebase App Hosting<br/>Next.js APIルート]
-    Host --> Gemini[Gemini 3.1 Flash Lite<br/>画像・動画の解析、質問への回答]
-    Host --> TTS[Gemini TTS<br/>日本語音声の生成]
-    Host --> Token[一時トークンの発行]
-    Token -.-> Live[Gemini Live API<br/>カメラ映像のリアルタイム解析]
-    User -.一時トークンで直接接続.-> Live
-    User --> Auth[Firebase Authentication<br/>匿名ログイン]
-    User --> DB[(Cloud Firestore<br/>講義ごとの解析結果)]
-    User --> MJ[MathJax + SRE<br/>構造ナビゲーション]
+    User["ブラウザ<br/>MathJax + SRE"]
+    subgraph G["Google Cloud / Firebase"]
+        Host["App Hosting<br/>Next.js"]
+        Gemini["Gemini<br/>解析・回答"]
+        TTS["Gemini TTS<br/>日本語音声"]
+        DB[("Firestore<br/>匿名認証")]
+        Live["Gemini Live<br/>カメラ解析"]
+    end
+    User --> Host
+    Host --> Gemini
+    Host --> TTS
+    User --> DB
+    User -. 一時トークン .-> Live
 ```
 
 - Gemini APIキーはサーバー（App Hostingのシークレット）だけが持ち、ブラウザには渡しません。カメラのリアルタイム解析では、サーバーが発行した一時トークンだけをブラウザに渡します。
@@ -130,7 +135,7 @@ flowchart LR
 | 候補 | 判断 | 理由 |
 |---|---|---|
 | diagcess（図の音声探索ライブラリ） | 不採用 | ライセンスが明示されておらず、利用実績もほぼないため |
-| Cloud Video Intelligence API | 不採用 | 2026年9月に提供終了予定で、動画はGeminiが映像と音声をまとめて扱えるため |
+| Cloud Video Intelligence API | 不採用 | 提供終了が予告されていたうえ、動画はGeminiが映像と音声をまとめて扱えるため |
 | MathJax 4 | 見送り | 最新版だが移行の手間が大きく、必要な構造探索は3.2.2で満たせるため |
 | Chirp 3（音声認識・合成） | 不採用 | Gemini Liveが音声の入出力を両方扱えるため |
 | SREの日本語ロケール | 存在しなかった | 対応言語は英・仏・西・独・伊のみ。そこで日本語の構造読みを自作した |
@@ -196,6 +201,8 @@ npm run build   # 本番ビルド
 | `src/app/api` | Gemini呼び出し（`convert` 画像、`convert-video` 動画、`ask` 質問、`speech` 音声、`token` Live用の一時トークン） |
 | `src/lib/gemini.ts` | 解析と回答のプロンプト・呼び出し |
 | `src/lib/gemini-keys.ts` | APIキーの切り替えと障害時の再試行 |
+| `src/lib/latex-check.ts` | Geminiが読み取った数式の規則による検査 |
+| `src/lib/rate-limit.ts` | 接続元ごとのAPI回数制限 |
 | `src/lib/japanese-math-speech.ts` | SREの読み上げを日本語へ変換する規則 |
 | `src/lib/speech-player.ts` | 音声の生成・再生・停止・速度の制御 |
 | `firestore.rules` | Firestoreのセキュリティルール |
@@ -203,6 +210,7 @@ npm run build   # 本番ビルド
 
 ## ライセンスと出典
 
+- 本リポジトリは [MIT License](LICENSE) です。
 - 使用ライブラリ：Next.js・React・Tailwind CSS（MIT License）、MathJax・Firebase JS SDK・`@google/genai`（Apache License 2.0）ほか。
 - デモページの講義動画：予備校のノリで学ぶ「大学の数学・物理」〈微分方程式入門①（微分方程式とは）〉（ヨビノリたくみ氏）をYouTubeの埋め込みで表示しています。
 
