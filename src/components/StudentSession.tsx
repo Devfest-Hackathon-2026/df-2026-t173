@@ -95,7 +95,7 @@ export default function StudentSession({ sessionId }: { sessionId: string }) {
     <div className="flex flex-col flex-1 max-w-3xl mx-auto w-full px-4 py-8">
       <p role="status" aria-atomic="true" className="sr-only">{announcement}</p>
       {error && <p role="alert" className="mb-4 text-red-700 dark:text-red-300">{error}</p>}
-      <header className="mb-6 space-y-4">
+      <header id="main-content" className="mb-6 space-y-4">
         <h1 className="text-2xl font-bold">{title || "読み込み中..."}</h1>
         <p className="text-sm text-zinc-500">資料を追加 → 数式を読む → 気になる式に質問・メモ。この画面だけで学習できます。</p>
         <details className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg text-sm">
@@ -156,13 +156,13 @@ export default function StudentSession({ sessionId }: { sessionId: string }) {
         )}
       </section>
 
-      <section id="main-content" role="list" aria-label="講義タイムライン" className="space-y-6"
+      <section role="list" aria-label="講義タイムライン" className="space-y-6"
         onFocusCapture={(event) => {
           if (!movingFocus.current) setMode(false);
           const card = (event.target as HTMLElement).closest<HTMLElement>("[data-entry-id]");
           if (card?.dataset.entryId) setUnread((previous) => previous.filter((id) => id !== card.dataset.entryId));
         }}>
-        {!entries.length && <p className="text-zinc-500 text-center py-8">上の「学習する資料を追加」から画像や動画を取り込んでください。解析した内容がここに表示されます。</p>}
+        {!entries.length && <p className="text-zinc-500 text-center py-8">「学習する資料を追加」セクションから画像や動画を取り込んでください。解析した内容がここに表示されます。</p>}
         {entries.map((entry, index) => {
           const annotation = annotations[entry.id];
           const kind = entry.type === "math" ? "数式" : entry.type === "graph" ? "グラフ" : entry.type === "narration" ? "講師の説明" : "テキスト";

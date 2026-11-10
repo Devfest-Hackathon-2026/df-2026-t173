@@ -1,4 +1,3 @@
-import { japaneseStructuralSpeech } from "@/lib/japanese-math-speech";
 
 type SpeechState = {
   id: string | null;
@@ -273,7 +272,7 @@ export function toggleLocalSpeech(id: string, text: string) {
 }
 
 export function toggleStructuralSpeech(id: string, text: string) {
-  toggleLocalSpeech(id, japaneseStructuralSpeech(text));
+  toggleLocalSpeech(id, text);
 }
 
 export function speakExploration(text: string) {

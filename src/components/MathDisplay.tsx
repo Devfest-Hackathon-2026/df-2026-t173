@@ -49,6 +49,16 @@ export default function MathDisplay({ latex, description, reading, type, imageUr
           speechEl.setAttribute("aria-label", japanese);
           speechEl.setAttribute("lang", "ja");
         }
+        const appContainer = containerRef.current.querySelector('[role="application"]');
+        if (appContainer) {
+          const japanese = japaneseStructuralSpeech(
+            appContainer.getAttribute("aria-label") || ""
+          );
+          if (japanese) {
+            appContainer.setAttribute("aria-label", japanese);
+            appContainer.setAttribute("lang", "ja");
+          }
+        }
       }
     };
     typeset();

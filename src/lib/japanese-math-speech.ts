@@ -103,25 +103,33 @@ export function japaneseStructuralSpeech(text: string): string {
   return result.replace(/大文字\s*大文字/g, "大文字").replace(/\s+/g, " ").replace(/、[\s、]*/g, "、").trim();
 }
 
-/** Translate the explorer live region before voicing the newly selected part. */
-export function observeJapaneseExploration(root: HTMLElement, speak: (text: string) => void): () => void {
+/** Translate the explorer live region so screen readers announce Japanese, not English. */
+export function observeJapaneseExploration(root: HTMLElement): () => void {
   const translated = new WeakMap<Element, string>();
+
+  const jaRegion = document.createElement("div");
+  jaRegion.className = "sr-only";
+  jaRegion.setAttribute("aria-live", "assertive");
+  jaRegion.setAttribute("aria-atomic", "true");
+  jaRegion.lang = "ja";
+  document.body.appendChild(jaRegion);
+
   const update = () => {
-    let selected = "";
     root.querySelectorAll<HTMLElement>(".MJX_LiveRegion, .MJX_LiveRegion_Show").forEach((region) => {
+      region.setAttribute("aria-hidden", "true");
+
       const raw = region.textContent?.trim();
       if (!raw) { translated.delete(region); return; }
       if (raw === translated.get(region)) return;
       const japanese = japaneseStructuralSpeech(raw);
-      translated.set(region, japanese);
-      region.lang = "ja";
-      if (raw !== japanese) region.textContent = japanese;
-      selected = japanese;
+      translated.set(region, raw);
+      jaRegion.textContent = "";
+      requestAnimationFrame(() => { jaRegion.textContent = japanese; });
     });
-    if (selected) speak(selected);
   };
   const observer = new MutationObserver(update);
   observer.observe(root, { childList: true, characterData: true, subtree: true });
+  root.querySelectorAll(".MJX_LiveRegion, .MJX_LiveRegion_Show").forEach((r) => r.setAttribute("aria-hidden", "true"));
   update();
-  return () => observer.disconnect();
+  return () => { observer.disconnect(); jaRegion.remove(); };
 }

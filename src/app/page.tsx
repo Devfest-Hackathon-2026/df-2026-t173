@@ -36,7 +36,7 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { num: "1", label: "撮影・アップロード", detail: "手元の講義スライドや動画をアップロード、またはカメラで板書を取り込む" },
+  { num: "1", label: "資料を取り込む", detail: "友人やTAが講義資料を取り込むか、自分でカメラで板書を撮影" },
   { num: "2", label: "Gemini が解析", detail: "画像/動画からLaTeX数式・テキスト・グラフの座標を自動抽出" },
   { num: "3", label: "構造的に理解", detail: "同じ画面で数式をキーボードで辿り、質問・ブックマーク・メモで理解を深める" },
 ];
@@ -95,7 +95,7 @@ export default function Home() {
           </h1>
           <p className="text-xl text-zinc-600 dark:text-zinc-300 max-w-xl mx-auto leading-relaxed">
             講義の数式を、<strong>音と構造</strong>で理解する。<br />
-            視覚に頼らない、新しい数学アクセシビリティ。
+            日本語で数式の構造を辿れる、新しい数学アクセシビリティ。
           </p>
 
           <div
@@ -109,6 +109,13 @@ export default function Home() {
             Enter で数式に入り、矢印キーで分子・分母・ルート内を辿れます
           </p>
         </div>
+      </section>
+
+      <section className="py-4 px-4">
+        <p className="max-w-2xl mx-auto text-center text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+          スクリーンリーダー用の数式ツール（MathCAT等）は日本語未対応。<br />
+          MathVoiceは日本語の構造読みを独自に実装した、世界初のWebアプリです。
+        </p>
       </section>
 
       <section className="py-12 px-4">
