@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createSession as saveSession, sessionError } from "@/lib/session-store";
+import { japaneseStructuralSpeech } from "@/lib/japanese-math-speech";
 
 const FEATURES = [
   {
@@ -72,6 +73,14 @@ export default function Home() {
       const mj = window.MathJax;
       if (mj?.startup) await mj.startup.promise;
       if (mj?.typesetPromise) await mj.typesetPromise([el]);
+      const app = el.querySelector('[role="application"]');
+      if (app) {
+        const ja = japaneseStructuralSpeech(app.getAttribute("aria-label") || "");
+        if (ja) {
+          app.setAttribute("aria-label", ja);
+          app.setAttribute("lang", "ja");
+        }
+      }
     };
     if (window.MathJax?.typesetPromise) {
       typeset();
@@ -108,6 +117,13 @@ export default function Home() {
           <p className="text-sm text-zinc-400">
             Enter で数式に入り、矢印キーで分子・分母・ルート内を辿れます
           </p>
+
+          <a
+            href="/demo"
+            className="inline-block mt-4 px-8 py-3 bg-[var(--accent)] text-white rounded-lg font-medium text-lg hover:opacity-90 transition-opacity"
+          >
+            デモを体験する
+          </a>
         </div>
       </section>
 
