@@ -1,7 +1,7 @@
 # MathVoice ― 見えない数式を、耳とキーボードでたどる
 
 **板書の数式を「聞き流す」のではなく、分子・分母・ルートの中へ自分で入って確かめる。**
-視覚障害のある大学生のための、数式アクセシビリティWebアプリです。DevFest GDGoC Japan Hackathon 2026（教育カテゴリ）向けに開発しました。
+視覚障害のある大学生のための、数式アクセシビリティWebアプリです。DevFest GDGoC Japan Hackathon 2026（医療・福祉カテゴリ）向けに開発しました。
 
 **[アプリを開く](https://mywebapp--hackathon-f647e.asia-east1.hosted.app/)** · **[1分デモを体験する](https://mywebapp--hackathon-f647e.asia-east1.hosted.app/demo)**
 <!-- TODO: デモ動画のURLができたら、上の行の末尾に「 · **[デモ動画](URL)**」を足す -->
