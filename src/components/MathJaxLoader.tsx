@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { speakExploration } from "@/lib/speech-player";
 import { observeJapaneseExploration } from "@/lib/japanese-math-speech";
 
 export default function MathJaxLoader() {
@@ -8,7 +9,7 @@ export default function MathJaxLoader() {
     let disposed = false;
     let disconnect = () => {};
     const attachExplorer = () => {
-      if (!disposed) disconnect = observeJapaneseExploration(document.body);
+      if (!disposed) disconnect = observeJapaneseExploration(document.body, speakExploration);
     };
     if (window.MathJax) {
       void Promise.resolve(window.MathJax.startup?.promise).then(attachExplorer);

@@ -104,7 +104,7 @@ export function japaneseStructuralSpeech(text: string): string {
 }
 
 /** Translate the explorer live region so screen readers announce Japanese, not English. */
-export function observeJapaneseExploration(root: HTMLElement): () => void {
+export function observeJapaneseExploration(root: HTMLElement, speak: (text: string) => void): () => void {
   const translated = new WeakMap<Element, string>();
 
   const jaRegion = document.createElement("div");
@@ -115,6 +115,7 @@ export function observeJapaneseExploration(root: HTMLElement): () => void {
   document.body.appendChild(jaRegion);
 
   const update = () => {
+    let selected = "";
     root.querySelectorAll<HTMLElement>(".MJX_LiveRegion, .MJX_LiveRegion_Show").forEach((region) => {
       region.setAttribute("aria-hidden", "true");
 
@@ -125,7 +126,9 @@ export function observeJapaneseExploration(root: HTMLElement): () => void {
       translated.set(region, raw);
       jaRegion.textContent = "";
       requestAnimationFrame(() => { jaRegion.textContent = japanese; });
+      selected = japanese;
     });
+    if (selected) speak(selected);
   };
   const observer = new MutationObserver(update);
   observer.observe(root, { childList: true, characterData: true, subtree: true });
