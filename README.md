@@ -55,16 +55,19 @@
 MathVoiceでは、**AIが担うのは「読み取り」と「説明」だけ**です。数式の構造は、決まった規則で動く仕組みが組み立てます。
 
 ```mermaid
+%%{init: {"flowchart": {"rankSpacing": 25, "nodeSpacing": 20, "padding": 8}}}%%
 flowchart LR
-    A[板書の写真・講義動画] -->|Gemini| B[LaTeX数式<br/>説明文・読み上げ台本]
-    B -->|規則による検査| V{問題なし?}
-    V -->|いいえ| W[要確認を表示<br/>元画像と見比べる]
-    V -->|はい| C[数式の構造の木<br/>MathJax + Speech Rule Engine]
-    W --> C
-    C -->|日本語化の規則<br/>自作・テスト済み| D[日本語の構造読み]
-    D --> E[学生が矢印キーでたどる]
-    E -->|分からない部分を質問| F[Gemini]
-    A -.元画像と照合.-> E
+    subgraph AI["AI（Gemini）"]
+        A["① 板書・動画を<br/>読み取る"]
+    end
+    subgraph RULE["決まった規則"]
+        B["② 読み取り結果を<br/>検査する"] --> C["③ 構造を<br/>組み立てる"] --> D["④ 日本語で<br/>読み上げる"]
+    end
+    subgraph HUMAN["学生"]
+        E["⑤ たどって<br/>確かめる"]
+    end
+    A --> B
+    D --> E
 ```
 
 | 段階 | 担当 | 理由 |
