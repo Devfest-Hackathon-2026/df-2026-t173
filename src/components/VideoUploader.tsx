@@ -20,8 +20,8 @@ export default function VideoUploader({ onResult, onSummary }: Props) {
       setError("動画ファイルを選択してください");
       return;
     }
-    if (file.size > 100 * 1024 * 1024) {
-      setError("100MB以下の動画を選択してください");
+    if (file.size > 150 * 1024 * 1024) {
+      setError("150MB以下の動画を選択してください");
       return;
     }
 
@@ -79,7 +79,7 @@ export default function VideoUploader({ onResult, onSummary }: Props) {
           <path d="M10 8.5l6 3.5-6 3.5v-7z" fill="currentColor" stroke="none" />
         </svg>
         <p className="text-lg font-medium">講義動画をアップロード</p>
-        <p className="text-sm text-zinc-500 mt-1">MP4, WebM, MOV に対応（100MBまで）</p>
+        <p className="text-sm text-zinc-500 mt-1">MP4, WebM, MOV に対応（150MBまで）</p>
         <input
           ref={inputRef}
           type="file"

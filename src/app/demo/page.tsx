@@ -113,6 +113,19 @@ function SpeechButton({
   );
 }
 
+const YOBINORI_VIDEO_ID = "po97dnBfoco";
+const YOBINORI_ENTRIES: TimelineEntry[] = [
+  {
+    id: "yobinori-placeholder",
+    type: "math",
+    latex: "\\frac{dy}{dx} = f(x, y)",
+    description: "微分方程式の一般形。yのxに関する微分がf(x,y)に等しいことを表します。",
+    reading: "わいのエックスにかんするびぶんは、えふかっこエックスカンマわい、にひとしい",
+    order: 0,
+    createdAt: 1731200000000,
+  },
+];
+
 export default function DemoPage() {
   const [targetId, setTargetId] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
@@ -120,21 +133,28 @@ export default function DemoPage() {
   const [extractSource, setExtractSource] = useState<
     "api" | "fallback" | null
   >(null);
+  const [demoTab, setDemoTab] = useState<"image" | "video">("image");
+  const [videoRevealed, setVideoRevealed] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mathRef = useRef<HTMLElement>(null);
   const extractedRef = useRef<HTMLElement>(null);
+  const videoResultRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (canvasRef.current) drawBoard(canvasRef.current);
   }, []);
 
   useEffect(() => {
-    const el = extracted ? extractedRef.current : mathRef.current;
-    if (!el) return;
+    const els = [
+      extracted ? extractedRef.current : null,
+      mathRef.current,
+      videoRevealed ? videoResultRef.current : null,
+    ].filter(Boolean) as HTMLElement[];
+    if (!els.length) return;
     const run = async () => {
       const mj = window.MathJax;
       if (mj?.startup) await mj.startup.promise;
-      if (mj?.typesetPromise) await mj.typesetPromise([el]);
+      if (mj?.typesetPromise) await mj.typesetPromise(els);
     };
     if (window.MathJax?.typesetPromise) {
       run();
@@ -147,7 +167,7 @@ export default function DemoPage() {
       }, 200);
       return () => clearInterval(id);
     }
-  }, [extracted]);
+  }, [extracted, videoRevealed]);
 
   const extractFromBoard = useCallback(async () => {
     const canvas = canvasRef.current;
@@ -387,71 +407,155 @@ export default function DemoPage() {
         <h2 className="text-xl font-bold">
           Geminiによるリアルタイム解析
         </h2>
-        <div className="p-5 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 space-y-4">
-          <p className="text-sm leading-relaxed">
-            TAや友人が撮影した講義の板書を、Geminiがリアルタイムに解析。
-            LaTeX数式・説明文・読み上げテキストを自動生成し、上で体験したインタラクティブな数式に変換します。
-          </p>
-          <div className="rounded-lg overflow-hidden border border-zinc-300 dark:border-zinc-600">
-            <canvas
-              ref={canvasRef}
-              className="w-full"
-              style={{ aspectRatio: "640/360" }}
-              aria-label="講義の板書サンプル: 二次方程式の解の公式、テイラー展開、行列式"
-            />
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
+        <p className="text-sm text-zinc-500 leading-relaxed">
+          TAや友人が撮影した板書画像や講義動画を、Geminiが解析。
+          LaTeX数式・説明文・読み上げテキストを自動生成し、インタラクティブな数式に変換します。
+        </p>
+
+        {/* タブ切り替え */}
+        <div className="flex gap-2">
+          {(["image", "video"] as const).map((tab) => (
             <button
+              key={tab}
               type="button"
-              onClick={() => void extractFromBoard()}
-              disabled={extracting}
-              className="px-5 py-2.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+              onClick={() => setDemoTab(tab)}
+              className={`px-4 py-2 text-sm rounded-md font-medium transition-colors ${
+                demoTab === tab
+                  ? "bg-blue-600 text-white"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+              }`}
             >
-              {extracting
-                ? "Geminiが解析中..."
-                : extracted
-                  ? "もう一度解析する"
-                  : "Geminiで解析する"}
+              {tab === "image" ? "板書画像" : "講義動画"}
             </button>
-            {extracting && (
-              <span className="text-sm text-zinc-500">
-                Gemini APIに画像を送信しています...
-              </span>
+          ))}
+        </div>
+
+        {/* 画像タブ */}
+        {demoTab === "image" && (
+          <div className="p-5 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 space-y-4">
+            <div className="rounded-lg overflow-hidden border border-zinc-300 dark:border-zinc-600">
+              <canvas
+                ref={canvasRef}
+                className="w-full"
+                style={{ aspectRatio: "640/360" }}
+                aria-label="講義の板書サンプル: 二次方程式の解の公式、テイラー展開、行列式"
+              />
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={() => void extractFromBoard()}
+                disabled={extracting}
+                className="px-5 py-2.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+              >
+                {extracting
+                  ? "Geminiが解析中..."
+                  : extracted
+                    ? "もう一度解析する"
+                    : "Geminiで解析する"}
+              </button>
+              {extracting && (
+                <span className="text-sm text-zinc-500">
+                  Gemini APIに画像を送信しています...
+                </span>
+              )}
+            </div>
+            {extractSource === "api" && (
+              <p className="text-xs text-green-600 dark:text-green-400 font-medium">
+                Gemini APIがリアルタイムに解析した結果です
+              </p>
+            )}
+            {extractSource === "fallback" && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                APIにアクセスできなかったため、プリセットの結果を表示しています
+              </p>
+            )}
+            {extracted && (
+              <section
+                ref={extractedRef}
+                role="list"
+                aria-label="解析結果"
+                className="space-y-4 pt-2"
+              >
+                {extracted.map((entry, index) => (
+                  <div
+                    key={entry.id}
+                    id={`entry-${entry.id}`}
+                    role="listitem"
+                    tabIndex={0}
+                    aria-label={`解析結果${index + 1}: ${entry.description}`}
+                    className="rounded-xl border border-zinc-200 dark:border-zinc-700 p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 bg-white dark:bg-zinc-900"
+                  >
+                    <MathDisplay {...entry} />
+                  </div>
+                ))}
+              </section>
             )}
           </div>
-          {extractSource === "api" && (
-            <p className="text-xs text-green-600 dark:text-green-400 font-medium">
-              Gemini APIがリアルタイムに解析した結果です
-            </p>
-          )}
-          {extractSource === "fallback" && (
-            <p className="text-xs text-amber-600 dark:text-amber-400">
-              APIにアクセスできなかったため、プリセットの結果を表示しています
-            </p>
-          )}
+        )}
 
-          {extracted && (
-            <section
-              ref={extractedRef}
-              role="list"
-              aria-label="解析結果"
-              className="space-y-4 pt-2"
-            >
-              {extracted.map((entry, index) => (
-                <div
-                  key={entry.id}
-                  id={`entry-${entry.id}`}
-                  role="listitem"
-                  tabIndex={0}
-                  aria-label={`解析結果${index + 1}: ${entry.description}`}
-                  className="rounded-xl border border-zinc-200 dark:border-zinc-700 p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 bg-white dark:bg-zinc-900"
-                >
-                  <MathDisplay {...entry} />
-                </div>
-              ))}
-            </section>
-          )}
-        </div>
+        {/* 動画タブ */}
+        {demoTab === "video" && (
+          <div className="p-5 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 space-y-4">
+            <div className="rounded-lg overflow-hidden border border-zinc-300 dark:border-zinc-600 bg-black">
+              <iframe
+                width="100%"
+                style={{ aspectRatio: "16/9" }}
+                src={`https://www.youtube-nocookie.com/embed/${YOBINORI_VIDEO_ID}`}
+                title="微分方程式入門①(微分方程式とは) — 予備校のノリで学ぶ「大学の数学・物理」"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+            <p className="text-xs text-zinc-500">
+              出典:{" "}
+              <a
+                href={`https://www.youtube.com/watch?v=${YOBINORI_VIDEO_ID}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-zinc-700 dark:hover:text-zinc-300"
+              >
+                予備校のノリで学ぶ「大学の数学・物理」— 微分方程式入門①(微分方程式とは)
+              </a>
+            </p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setVideoRevealed(true)}
+                disabled={videoRevealed}
+                className="px-5 py-2.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+              >
+                {videoRevealed ? "解析結果を表示中" : "Geminiで解析する"}
+              </button>
+              {!videoRevealed && (
+                <span className="text-xs text-zinc-500">
+                  ※ 事前にGemini APIで解析した結果を表示します
+                </span>
+              )}
+            </div>
+            {videoRevealed && (
+              <section
+                ref={videoResultRef}
+                role="list"
+                aria-label="動画の解析結果"
+                className="space-y-4 pt-2"
+              >
+                {YOBINORI_ENTRIES.filter((e) => e.type === "math").map((entry, index) => (
+                  <div
+                    key={entry.id}
+                    id={`entry-${entry.id}`}
+                    role="listitem"
+                    tabIndex={0}
+                    aria-label={`動画から抽出${index + 1}: ${entry.description}`}
+                    className="rounded-xl border border-zinc-200 dark:border-zinc-700 p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 bg-white dark:bg-zinc-900"
+                  >
+                    <MathDisplay {...entry} />
+                  </div>
+                ))}
+              </section>
+            )}
+          </div>
+        )}
       </section>
 
       {/* ── Section 6: Gemini Q&A ── */}
