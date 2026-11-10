@@ -3,32 +3,65 @@
 import { useEffect } from "react";
 import { speakExploration } from "@/lib/speech-player";
 import { observeJapaneseExploration } from "@/lib/japanese-math-speech";
-import { EXPLORATION_EVENT } from "./ExplorationCaption";
+import { GUIDE_EVENT, type GuideMode } from "./ExplorationCaption";
 
-const speakAndCaption = (text: string) => {
-  speakExploration(text);
-  window.dispatchEvent(new CustomEvent(EXPLORATION_EVENT, { detail: text }));
-};
+const HINT_ID = "math-explore-hint";
+const HINT = "Enterで数式の中に入ります。左右の矢印で隣の部分へ、下矢印で一段深く、上矢印で一段浅く移動し、Escで終了します。";
 
-// The explorer moves through the formula on arrow keys but leaves the browser free to scroll the page too,
-// which pushes the formula off screen mid-exploration. Bubble phase runs after MathJax has handled the key.
-function keepFormulaInView(event: KeyboardEvent) {
-  if (event.key.startsWith("Arrow") && (event.target as Element | null)?.closest?.("mjx-container")) {
-    event.preventDefault();
-  }
+const setGuide = (mode: GuideMode) => window.dispatchEvent(new CustomEvent(GUIDE_EVENT, { detail: mode }));
+const formulaOf = (target: EventTarget | null) => (target as Element | null)?.closest?.("mjx-container") ?? null;
+
+function onKeyDown(event: KeyboardEvent) {
+  if (!formulaOf(event.target)) return;
+  // The explorer moves through the formula on arrow keys but leaves the browser free to scroll the page too,
+  // which pushes the formula off screen mid-exploration. Bubble phase runs after MathJax has handled the key.
+  if (event.key.startsWith("Arrow")) event.preventDefault();
+}
+
+// MathJax stops Enter/Escape from bubbling, so watch them on the way down instead.
+function onModeKey(event: KeyboardEvent) {
+  if (!formulaOf(event.target)) return;
+  if (event.key === "Enter") setGuide("explore");
+  if (event.key === "Escape") setGuide("focus");
+}
+
+function onFocusIn(event: FocusEvent) {
+  const formula = formulaOf(event.target);
+  if (!formula) return;
+  // Screen reader users hear the key help once as the formula's description; the visual guide is aria-hidden.
+  formula.setAttribute("aria-describedby", HINT_ID);
+  setGuide("focus");
+}
+
+function onFocusOut(event: FocusEvent) {
+  if (formulaOf(event.target) && !formulaOf(event.relatedTarget)) setGuide("off");
 }
 
 export default function MathJaxLoader() {
   useEffect(() => {
-    window.addEventListener("keydown", keepFormulaInView);
-    return () => window.removeEventListener("keydown", keepFormulaInView);
+    const hint = document.createElement("p");
+    hint.id = HINT_ID;
+    hint.hidden = true;
+    hint.textContent = HINT;
+    document.body.appendChild(hint);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keydown", onModeKey, true);
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
+    return () => {
+      hint.remove();
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keydown", onModeKey, true);
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
+    };
   }, []);
 
   useEffect(() => {
     let disposed = false;
     let disconnect = () => {};
     const attachExplorer = () => {
-      if (!disposed) disconnect = observeJapaneseExploration(document.body, speakAndCaption);
+      if (!disposed) disconnect = observeJapaneseExploration(document.body, speakExploration);
     };
     if (window.MathJax) {
       void Promise.resolve(window.MathJax.startup?.promise).then(attachExplorer);
