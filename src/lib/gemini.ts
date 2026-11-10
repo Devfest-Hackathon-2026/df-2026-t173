@@ -2,8 +2,14 @@ import { GoogleGenAI, createPartFromBase64, FileState } from "@google/genai";
 import { writeFile, unlink } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
+import { GEMINI_MODEL, withGeminiKey } from "./gemini-keys";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+const clients = new Map<string, GoogleGenAI>();
+function client(apiKey: string) {
+  let ai = clients.get(apiKey);
+  if (!ai) clients.set(apiKey, ai = new GoogleGenAI({ apiKey }));
+  return ai;
+}
 
 export interface GeminiEntry {
   type: "math" | "text" | "graph" | "narration";
@@ -119,49 +125,53 @@ export async function extractFromVideo(videoBuffer: Buffer, mimeType: string): P
   await writeFile(tmpPath, videoBuffer);
 
   try {
-    const uploaded = await ai.files.upload({ file: tmpPath, config: { mimeType } });
-    const fileName = uploaded.name!;
+    // An uploaded file belongs to one key's project, so upload, wait and generate with the same key.
+    return await withGeminiKey("video", async (apiKey) => {
+      const ai = client(apiKey);
+      const uploaded = await ai.files.upload({ file: tmpPath, config: { mimeType } });
+      const fileName = uploaded.name!;
 
-    let file = await ai.files.get({ name: fileName });
-    while (file.state === FileState.PROCESSING) {
-      await new Promise((r) => setTimeout(r, 3000));
-      file = await ai.files.get({ name: fileName });
-    }
-    if (file.state === FileState.FAILED) {
-      throw new Error("Video processing failed");
-    }
+      let file = await ai.files.get({ name: fileName });
+      while (file.state === FileState.PROCESSING) {
+        await new Promise((r) => setTimeout(r, 3000));
+        file = await ai.files.get({ name: fileName });
+      }
+      if (file.state === FileState.FAILED) {
+        throw new Error("Video processing failed");
+      }
 
-    const result = await ai.models.generateContent({
-      model: "gemini-3.1-flash-lite",
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: VIDEO_PROMPT },
-            { fileData: { fileUri: file.uri!, mimeType: file.mimeType! } },
-          ],
+      const result = await ai.models.generateContent({
+        model: GEMINI_MODEL(),
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: VIDEO_PROMPT },
+              { fileData: { fileUri: file.uri!, mimeType: file.mimeType! } },
+            ],
+          },
+        ],
+        config: {
+          maxOutputTokens: 8192,
+          responseMimeType: "application/json",
         },
-      ],
-      config: {
-        maxOutputTokens: 8192,
-        responseMimeType: "application/json",
-      },
+      });
+
+      await ai.files.delete({ name: fileName }).catch(() => {});
+
+      const text = result.text ?? "";
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("Gemini returned no valid JSON");
+      return JSON.parse(jsonMatch[0]) as VideoGeminiResult;
     });
-
-    await ai.files.delete({ name: fileName }).catch(() => {});
-
-    const text = result.text ?? "";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("Gemini returned no valid JSON");
-    return JSON.parse(jsonMatch[0]);
   } finally {
     await unlink(tmpPath).catch(() => {});
   }
 }
 
 export async function extractFromImage(base64Image: string, mimeType: string): Promise<GeminiResult> {
-  const result = await ai.models.generateContent({
-    model: "gemini-3.1-flash-lite",
+  const result = await withGeminiKey("image", (apiKey) => client(apiKey).models.generateContent({
+    model: GEMINI_MODEL(),
     contents: [
       {
         role: "user",
@@ -171,7 +181,7 @@ export async function extractFromImage(base64Image: string, mimeType: string): P
         ],
       },
     ],
-  });
+  }));
 
   const text = result.text ?? "";
   const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -222,8 +232,8 @@ export async function askAboutEntries(
     ? "この講義内容全体を要約してください。最初に一文で全体のテーマを述べ、その後に重要な数式や概念の流れを順番に説明してください。"
     : question;
 
-  const result = await ai.models.generateContent({
-    model: "gemini-3.1-flash-lite",
+  const result = await withGeminiKey("ask", (apiKey) => client(apiKey).models.generateContent({
+    model: GEMINI_MODEL(),
     config: { systemInstruction: ASSISTANT_PROMPT },
     contents: [
       { role: "user", parts: [{ text: context }] },
@@ -231,7 +241,7 @@ export async function askAboutEntries(
       ...history.map((turn) => ({ role: turn.role, parts: [{ text: turn.text }] })),
       { role: "user", parts: [{ text: request }] },
     ],
-  });
+  }));
 
   const text = result.text?.trim();
   if (!text) throw new Error("Gemini returned an empty answer");

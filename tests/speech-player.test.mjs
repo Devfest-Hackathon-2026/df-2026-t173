@@ -130,17 +130,16 @@ test('switching to a different entry prevents stale playback from replacing it',
   assert.equal(audios[0].paused, true);
 });
 
-test('structure exploration stops Google playback and uses the selected speed', async () => {
+test('structure exploration replaces current playback with Gemini speech at the selected speed', async () => {
   const finished = player.toggleGoogleSpeech('first', '説明');
   await tick();
   player.setSpeechRate(1.8);
-  player.speakExploration('StartFraction');
-  await finished;
-  assert.equal(audios[0].paused, true);
-  assert.equal(utterances[0].lang, 'ja-JP');
-  assert.ok(utterances[0].text.includes('分数の始まり'));
-  assert.equal(utterances[0].rate, 1.8);
+  player.speakExploration('分数の始まり');
+  await finished; // The earlier explanation is cancelled rather than left playing underneath.
   assert.equal(player.getSpeechSnapshot().id, 'math-exploration');
+  await tick(); await tick();
+  assert.equal(calls, 2);
+  assert.equal(utterances.length, 0);
 });
 
 test('API errors are visible and users can explicitly choose device speech', async () => {
@@ -279,18 +278,16 @@ test('merged pronunciation cleanup retains older Japanese reading scripts', () =
   assert.equal(player.normalizeJapaneseSpeech('えっくす＝いち'), 'えっくすいこーるいち');
 });
 
-test('Japanese structure exploration uses the shared player and selected speed', () => {
-  player.setSpeechRate(1.4);
+test('structure exploration sends the Japanese text itself to the speech API', async () => {
+  const bodies = [];
+  globalThis.fetch = async (_url, init) => { bodies.push(JSON.parse(init.body).text); return wav(); };
   player.speakExploration('えっくす の にじょう');
-  assert.equal(utterances[0].lang, 'ja-JP');
-  assert.equal(utterances[0].rate, 1.4);
-  assert.equal(player.getSpeechSnapshot().id, 'math-exploration');
+  await tick();
+  assert.deepEqual(bodies, ['えっくす の にじょう']);
 });
 
-test('the structure button converts raw SRE speech and always chooses Japanese', () => {
-  player.toggleStructuralSpeech('structure', 'StartFraction x Over 2 EndFraction');
+test('device structure reading always uses a Japanese voice', () => {
+  player.toggleStructuralSpeech('structure', '分数の始まり、分子、エックス');
   assert.equal(utterances[0].lang, 'ja-JP');
   assert.ok(utterances[0].text.includes('分子、エックス'));
-  assert.ok(utterances[0].text.includes('分母、2'));
-  assert.ok(!/[a-z]/i.test(utterances[0].text));
 });

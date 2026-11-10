@@ -3,6 +3,7 @@ runConfig:
   memoryMiB: 512
 
 env:
+  # The secret may hold several comma-separated keys; the server rotates across them.
   - variable: GEMINI_API_KEY
     secret: GEMINI_API_KEY
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY

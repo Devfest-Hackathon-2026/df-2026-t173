@@ -1,11 +1,14 @@
 import { GoogleGenAI } from "@google/genai";
+import { errorStatus, hasGeminiKey, withGeminiKey } from "@/lib/gemini-keys";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return Response.json({ error: "Google音声の接続設定がありません。" }, { status: 503 });
+  const limited = rateLimit(request, "speech", 90);
+  if (limited) return limited;
+  if (!hasGeminiKey()) return Response.json({ error: "Google音声の接続設定がありません。" }, { status: 503 });
 
   let text: string;
   try {
@@ -21,9 +24,10 @@ export async function POST(request: Request) {
     return Response.json({ error: "一度に読み上げる文章は1〜1500文字にしてください。" }, { status: 400 });
   }
 
+  // One deadline for every key attempt so failover cannot outlive maxDuration.
+  const signal = AbortSignal.any([request.signal, AbortSignal.timeout(55000)]);
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    const result = await ai.interactions.create({
+    const result = await withGeminiKey("speech", (apiKey) => new GoogleGenAI({ apiKey }).interactions.create({
       model: process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-lite-tts",
       input: [{
         type: "user_input",
@@ -38,7 +42,7 @@ export async function POST(request: Request) {
       response_format: { type: "audio", mime_type: "audio/wav" },
       generation_config: { speech_config: [{ voice: "Kore", language: "ja" }] },
       store: false,
-    }, { signal: AbortSignal.any([request.signal, AbortSignal.timeout(55000)]) });
+    }, { signal }));
     const audio = result.output_audio;
     if (!audio?.data || audio.mime_type !== "audio/wav") throw new Error("Missing WAV audio");
     const bytes = Buffer.from(audio.data, "base64");
@@ -49,8 +53,7 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "audio/wav", "Cache-Control": "private, no-store" },
     });
   } catch (error) {
-    const status = error && typeof error === "object" && "status" in error ? Number(error.status) : 0;
-    if (status === 429) {
+    if (errorStatus(error) === 429) {
       return Response.json({ error: "Google音声の利用上限に達しました。少し待ってからお試しください。" }, { status: 429 });
     }
     return Response.json({ error: "Google音声を生成できませんでした。再試行するか、端末の音声をご利用ください。" }, { status: 502 });

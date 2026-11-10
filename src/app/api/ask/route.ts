@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { askAboutEntries, type AssistantContextEntry, type AssistantTurn } from "@/lib/gemini";
+import { rateLimit } from "@/lib/rate-limit";
+import { hasGeminiKey } from "@/lib/gemini-keys";
 
 const MAX_ENTRIES = 300;
 const MAX_QUESTION = 1000;
@@ -19,7 +21,9 @@ function isTurn(value: unknown): value is AssistantTurn {
 }
 
 export async function POST(req: NextRequest) {
-  if (!process.env.GEMINI_API_KEY) {
+  const limited = rateLimit(req, "ask", 20);
+  if (limited) return limited;
+  if (!hasGeminiKey()) {
     return NextResponse.json({ error: "AIの接続設定がありません。サーバーを再起動してください。" }, { status: 503 });
   }
 

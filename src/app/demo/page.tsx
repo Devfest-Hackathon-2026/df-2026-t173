@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import MathDisplay from "@/components/MathDisplay";
 import ContentAssistant from "@/components/ContentAssistant";
 import type { TimelineEntry } from "@/components/Timeline";
@@ -199,9 +200,7 @@ export default function DemoPage() {
   const [targetId, setTargetId] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [extracted, setExtracted] = useState<TimelineEntry[] | null>(null);
-  const [extractSource, setExtractSource] = useState<
-    "api" | "fallback" | null
-  >(null);
+  const [extractError, setExtractError] = useState("");
   const [demoTab, setDemoTab] = useState<"image" | "video">("image");
   const [videoRevealed, setVideoRevealed] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -297,7 +296,7 @@ export default function DemoPage() {
     if (!canvas || extracting) return;
     setExtracting(true);
     setExtracted(null);
-    setExtractSource(null);
+    setExtractError("");
     try {
       const dataUrl = canvas.toDataURL("image/png");
       const base64 = dataUrl.split(",")[1];
@@ -328,13 +327,13 @@ export default function DemoPage() {
             }),
           ),
         );
-        setExtractSource("api");
       } else {
         throw new Error("No entries");
       }
-    } catch {
-      setExtracted(DEMO_ENTRIES);
-      setExtractSource("fallback");
+    } catch (error) {
+      setExtractError(error instanceof Error && error.message !== "No entries"
+        ? error.message
+        : "解析できませんでした。もう一度お試しください。");
     } finally {
       setExtracting(false);
     }
@@ -366,11 +365,11 @@ export default function DemoPage() {
 
       {/* ── 問題定義 + 共感 ── */}
       <Narration
-        speech="日本には約1400人の視覚障害のある大学生がいます。講義で板書される数式に、独力でアクセスする手段はほとんどありません。"
+        speech="全国の大学・短大・高専に、視覚障害のある学生が1366人在籍しています。講義で板書される数式に、独力でアクセスする手段はほとんどありません。"
         className="p-6 rounded-xl bg-zinc-100 dark:bg-zinc-900 space-y-5"
       >
         <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-          日本には約1,400人の視覚障害のある大学生がいます。
+          全国の大学・短大・高専に、視覚障害のある学生が1,366人在籍しています。
           講義で板書される数式に、独力でアクセスする手段はほとんどありません。
         </p>
       </Narration>
@@ -576,7 +575,10 @@ export default function DemoPage() {
                     : "Geminiで解析する"}
               </button>
             </div>
-            {extractSource === "api" && (
+            {extractError && (
+              <p role="alert" className="text-sm text-red-600 dark:text-red-400">{extractError}</p>
+            )}
+            {extracted && (
               <p className="text-xs text-green-600 dark:text-green-400 font-medium">
                 Gemini APIがリアルタイムに解析した結果です
               </p>
@@ -689,7 +691,7 @@ export default function DemoPage() {
 
       {/* ── Tech Stack ── */}
       <Narration
-        speech="使用技術。Gemini APIで画像動画解析とQ&A。Cloud Text to Speechで日本語音声合成。Firebase AuthenticationとFirestore。Firebase App Hostingでデプロイ。"
+        speech="使用技術。Gemini APIで画像動画解析とQ&A。Gemini TTSで日本語音声合成。Firebase AuthenticationとFirestore。Firebase App Hostingでデプロイ。"
         className="p-5 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-3"
       >
         <h2 className="text-lg font-bold">使用技術</h2>
@@ -699,7 +701,7 @@ export default function DemoPage() {
             <p className="text-xs text-zinc-500">画像・動画解析 + Q&amp;A</p>
           </div>
           <div className="p-3 rounded-lg bg-white dark:bg-zinc-800 text-center">
-            <p className="font-semibold">Cloud TTS</p>
+            <p className="font-semibold">Gemini TTS</p>
             <p className="text-xs text-zinc-500">日本語音声合成</p>
           </div>
           <div className="p-3 rounded-lg bg-white dark:bg-zinc-800 text-center">
@@ -718,12 +720,12 @@ export default function DemoPage() {
         speech="自分の講義資料で試すには、トップページにアクセスしてください。"
         className="text-center pb-8"
       >
-        <a
+        <Link
           href="/"
           className="inline-block px-8 py-3 bg-[var(--accent)] text-white rounded-lg font-medium text-lg hover:opacity-90 transition-opacity"
         >
           自分の講義資料で試す →
-        </a>
+        </Link>
       </Narration>
     </div>
   );

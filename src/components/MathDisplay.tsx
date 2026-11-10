@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import SpeechButton from "./SpeechButton";
 import GraphSonifier from "./GraphSonifier";
 import { japaneseStructuralSpeech } from "@/lib/japanese-math-speech";
+import { checkLatex } from "@/lib/latex-check";
 
 declare global {
   interface Window {
@@ -29,6 +30,9 @@ interface Props {
 export default function MathDisplay({ latex, description, reading, type, imageUrl, data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [structuralSpeech, setStructuralSpeech] = useState<string>("");
+  const [renderFailed, setRenderFailed] = useState(false);
+  const issues = type === "math" ? checkLatex(latex) : [];
+  if (renderFailed) issues.push("数式として組み立てられませんでした");
 
   useEffect(() => {
     if (type !== "math" || !containerRef.current) return;
@@ -42,6 +46,7 @@ export default function MathDisplay({ latex, description, reading, type, imageUr
       }
 
       if (containerRef.current) {
+        setRenderFailed(Boolean(containerRef.current.querySelector("mjx-merror")));
         const speechEl = containerRef.current.querySelector("[data-semantic-speech]");
         if (speechEl) {
           const japanese = japaneseStructuralSpeech(speechEl.getAttribute("data-semantic-speech") || "");
@@ -93,6 +98,12 @@ export default function MathDisplay({ latex, description, reading, type, imageUr
         </div>
       ) : (
         <p className="text-base">{latex}</p>
+      )}
+
+      {issues.length > 0 && (
+        <p role="note" className="text-sm rounded-md border border-amber-500/60 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-200 px-3 py-2">
+          ⚠ 要確認（規則による自動チェック）: {issues.join("、")}。元の板書と見比べてください。
+        </p>
       )}
 
       <div className="flex items-center justify-between gap-2 flex-wrap">

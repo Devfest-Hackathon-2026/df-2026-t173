@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { beforeEach, afterEach, test } from 'node:test';
-import { loadTypescript } from './helpers/load-typescript.mjs';
+import { loadTypescript, typescriptModuleUrl } from './helpers/load-typescript.mjs';
 
 let route;
 let requests;
@@ -27,6 +27,8 @@ beforeEach(async () => {
   route = await loadTypescript(new URL('../src/app/api/speech/route.ts', import.meta.url), {
     'import { GoogleGenAI } from "@google/genai";':
       'class GoogleGenAI { interactions = { create: (...args) => globalThis.mockSpeech(...args) }; }',
+    '"@/lib/gemini-keys"': JSON.stringify(await typescriptModuleUrl(new URL('../src/lib/gemini-keys.ts', import.meta.url))),
+    '"@/lib/rate-limit"': JSON.stringify(await typescriptModuleUrl(new URL('../src/lib/rate-limit.ts', import.meta.url))),
   });
 });
 afterEach(() => {

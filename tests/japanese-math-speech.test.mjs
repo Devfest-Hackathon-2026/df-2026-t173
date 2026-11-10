@@ -52,15 +52,19 @@ test('the live region is translated once, including mixed-language updates and r
     observe() {}
     disconnect() { this.disconnected = true; }
   };
-  const region = { textContent: 'StartFraction x Over 2 EndFraction', lang: 'en' };
+  const jaRegion = { setAttribute() {}, remove() { this.removed = true; }, textContent: '' };
+  globalThis.document = { createElement: () => jaRegion, body: { appendChild() {} } };
+  globalThis.requestAnimationFrame = (callback) => callback();
+  const attributes = {};
+  const region = { textContent: 'StartFraction x Over 2 EndFraction', setAttribute: (k, v) => { attributes[k] = v; } };
   const root = { querySelectorAll: () => [region] };
   const spoken = [];
   const disconnect = observeJapaneseExploration(root, (text) => spoken.push(text));
   const observer = observers[0];
-  assert.equal(region.lang, 'ja');
-  assert.ok(region.textContent.includes('分子、エックス'));
+  assert.equal(attributes['aria-hidden'], 'true'); // MathJax's English region is hidden from screen readers.
+  assert.ok(jaRegion.textContent.includes('分子、エックス'));
   assert.equal(spoken.length, 1);
-  observer.callback(); // The translator's own text mutation must not read twice.
+  observer.callback(); // An unchanged region must not read twice.
   assert.equal(spoken.length, 1);
   region.textContent = '分母 x plus 1';
   observer.callback();
@@ -73,4 +77,5 @@ test('the live region is translated once, including mixed-language updates and r
   assert.equal(spoken.length, 3);
   disconnect();
   assert.equal(observer.disconnected, true);
+  assert.equal(jaRegion.removed, true);
 });
