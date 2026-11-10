@@ -147,8 +147,8 @@ flowchart LR
 Node.js 20以降が必要です。
 
 ```bash
-git clone https://github.com/woodgate1009/DevFest-Demo.git
-cd DevFest-Demo
+git clone https://github.com/Devfest-Hackathon-2026/df-2026-t173.git
+cd df-2026-t173
 npm ci
 cp .env.example .env.local
 npm run dev
