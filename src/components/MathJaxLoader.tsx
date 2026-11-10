@@ -33,7 +33,7 @@ export default function MathJaxLoader() {
         },
         a11y: {
           speech: true,
-          subtitles: true,
+          subtitles: false,
           braille: false,
         },
       },
