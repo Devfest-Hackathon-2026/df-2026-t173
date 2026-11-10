@@ -130,8 +130,8 @@ export default function Home() {
 
       <section className="py-4 px-4">
         <p className="max-w-2xl mx-auto text-center text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-          既存のスクリーンリーダー用数式ツール（MathCAT等）は日本語未対応。<br />
-          MathVoiceは画像からの数式抽出と日本語の構造読みを両立した、新しいアプローチです。
+          講義の数式を、キーボードだけで構造的に辿れる。<br />
+          画像からの数式抽出と日本語の構造読みを両立した、新しいアプローチです。
         </p>
       </section>
 

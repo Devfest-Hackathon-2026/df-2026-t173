@@ -5,18 +5,20 @@ import MathDisplay from "@/components/MathDisplay";
 import ContentAssistant from "@/components/ContentAssistant";
 import type { TimelineEntry } from "@/components/Timeline";
 
+const QUADRATIC_READING =
+  "二次方程式の解の公式。エックスは、分母が2エー、分子がマイナスビー プラスマイナス ルート ビーの二乗マイナス4エーシー です。";
+
 const SRE_ENGLISH =
   "x equals StartFraction negative b plus or minus StartSquareRoot b squared minus 4 a c EndSquareRoot Over 2 a EndFraction";
 
-const FALLBACK_ENTRIES: TimelineEntry[] = [
+const DEMO_ENTRIES: TimelineEntry[] = [
   {
     id: "demo-quadratic",
     type: "math",
     latex: "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}",
     description:
       "二次方程式 ax²+bx+c=0 の解の公式です。分母が2a、分子に−bと判別式の平方根があります。",
-    reading:
-      "二次方程式の解の公式。エックスは、分母が2エー、分子がマイナスビー プラスマイナス ルート ビーの二乗マイナス4エーシー です。",
+    reading: QUADRATIC_READING,
     order: 0,
     createdAt: 1731200000000,
   },
@@ -48,48 +50,78 @@ function drawBoard(canvas: HTMLCanvasElement) {
   if (!ctx) return;
   const w = (canvas.width = 640);
   const h = (canvas.height = 360);
-
   ctx.fillStyle = "#1a472a";
   ctx.fillRect(0, 0, w, h);
   ctx.strokeStyle = "#8B7355";
   ctx.lineWidth = 8;
   ctx.strokeRect(4, 4, w - 8, h - 8);
-
   ctx.fillStyle = "rgba(255,255,255,0.08)";
   ctx.fillRect(20, 20, w - 40, h - 40);
-
   ctx.fillStyle = "#e8e8d0";
   ctx.font = "bold 22px serif";
   ctx.fillText("線形代数 第5回", 40, 55);
-
   ctx.font = "24px serif";
   ctx.fillText("二次方程式 ax² + bx + c = 0 の解:", 40, 105);
-
   ctx.font = "italic 28px serif";
   ctx.fillStyle = "#fffdd0";
   ctx.fillText("x = (-b ± √(b²-4ac)) / 2a", 80, 155);
-
   ctx.fillStyle = "#e8e8d0";
   ctx.font = "24px serif";
   ctx.fillText("テイラー展開:", 40, 215);
-
   ctx.font = "italic 28px serif";
   ctx.fillStyle = "#fffdd0";
   ctx.fillText("eˣ = Σ xⁿ/n! = 1 + x + x²/2! + ...", 80, 260);
-
   ctx.fillStyle = "#e8e8d0";
   ctx.font = "24px serif";
   ctx.fillText("行列式: det(A) = ad - bc", 40, 320);
+}
+
+function SpeechButton({
+  label,
+  text,
+  lang,
+}: {
+  label: string;
+  text: string;
+  lang: string;
+}) {
+  const [playing, setPlaying] = useState(false);
+  const play = useCallback(() => {
+    if (typeof speechSynthesis === "undefined") return;
+    if (playing) {
+      speechSynthesis.cancel();
+      setPlaying(false);
+      return;
+    }
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.rate = lang === "en-US" ? 0.9 : 1;
+    u.onend = () => setPlaying(false);
+    u.onerror = () => setPlaying(false);
+    setPlaying(true);
+    speechSynthesis.speak(u);
+  }, [playing, text, lang]);
+  return (
+    <button
+      type="button"
+      onClick={play}
+      className="px-4 py-2 text-sm rounded-md bg-zinc-700 text-white hover:bg-zinc-600 transition-colors"
+    >
+      {playing ? "⏹ 停止" : `🔊 ${label}`}
+    </button>
+  );
 }
 
 export default function DemoPage() {
   const [targetId, setTargetId] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [extracted, setExtracted] = useState<TimelineEntry[] | null>(null);
-  const [extractSource, setExtractSource] = useState<"api" | "fallback" | null>(null);
-  const [beforePlaying, setBeforePlaying] = useState(false);
+  const [extractSource, setExtractSource] = useState<
+    "api" | "fallback" | null
+  >(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const listRef = useRef<HTMLElement>(null);
+  const mathRef = useRef<HTMLElement>(null);
   const extractedRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -97,7 +129,7 @@ export default function DemoPage() {
   }, []);
 
   useEffect(() => {
-    const el = extracted ? extractedRef.current : listRef.current;
+    const el = extracted ? extractedRef.current : mathRef.current;
     if (!el) return;
     const run = async () => {
       const mj = window.MathJax;
@@ -116,23 +148,6 @@ export default function DemoPage() {
       return () => clearInterval(id);
     }
   }, [extracted]);
-
-  const playEnglishBefore = useCallback(() => {
-    if (typeof speechSynthesis === "undefined") return;
-    if (beforePlaying) {
-      speechSynthesis.cancel();
-      setBeforePlaying(false);
-      return;
-    }
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(SRE_ENGLISH);
-    u.lang = "en-US";
-    u.rate = 0.9;
-    u.onend = () => setBeforePlaying(false);
-    u.onerror = () => setBeforePlaying(false);
-    setBeforePlaying(true);
-    speechSynthesis.speak(u);
-  }, [beforePlaying]);
 
   const extractFromBoard = useCallback(async () => {
     const canvas = canvasRef.current;
@@ -153,7 +168,16 @@ export default function DemoPage() {
       if (data.entries?.length) {
         setExtracted(
           data.entries.map(
-            (e: { type: string; latex: string; description: string; reading?: string; data?: { x: number; y: number }[] }, i: number) => ({
+            (
+              e: {
+                type: string;
+                latex: string;
+                description: string;
+                reading?: string;
+                data?: { x: number; y: number }[];
+              },
+              i: number,
+            ) => ({
               ...e,
               id: `extracted-${i}`,
               order: i,
@@ -166,71 +190,207 @@ export default function DemoPage() {
         throw new Error("No entries");
       }
     } catch {
-      setExtracted(FALLBACK_ENTRIES);
+      setExtracted(DEMO_ENTRIES);
       setExtractSource("fallback");
     } finally {
       setExtracting(false);
     }
   }, [extracting]);
 
-  const entries = extracted || FALLBACK_ENTRIES;
+  const entries = extracted || DEMO_ENTRIES;
   const targetIndex = entries.findIndex((e) => e.id === targetId);
   const target = entries[targetIndex];
 
   return (
-    <div className="flex flex-col flex-1 max-w-3xl mx-auto w-full px-4 py-8 space-y-12">
+    <div className="flex flex-col flex-1 max-w-3xl mx-auto w-full px-4 py-8 space-y-14">
       {/* Hero */}
       <header className="text-center space-y-3">
         <h1 className="text-3xl font-bold">
-          Math<span className="text-[var(--accent)]">Voice</span> デモ
+          Math<span className="text-[var(--accent)]">Voice</span>
         </h1>
-        <p className="text-zinc-500 text-sm">
-          視覚障碍のある学生が、講義の数式を<strong>日本語で構造的に</strong>
-          理解できる世界を体験してください
+        <p className="text-lg text-zinc-600 dark:text-zinc-300">
+          講義の数式を、音と構造で理解する
         </p>
       </header>
 
-      {/* Section 1: The Problem */}
+      {/* ── Section 1: 共感 ── */}
       <section className="space-y-4">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
-            1
-          </span>
-          問題: 既存ツールの数式読み上げ
-        </h2>
-        <div className="p-5 bg-red-50 dark:bg-red-950/30 rounded-xl border border-red-200 dark:border-red-900 space-y-3">
-          <p className="text-sm leading-relaxed">
-            既存のスクリーンリーダー向け数式ツール（MathCAT等）は<strong>日本語に未対応</strong>です。
-            日本の視覚障碍学生は、数式をこのような英語の羅列で聞くしかありません:
+        <div className="p-6 rounded-xl bg-zinc-100 dark:bg-zinc-900 space-y-4">
+          <p className="text-base leading-relaxed">
+            大学の講義。教授が黒板に数式を書く。<br />
+            周りの学生はノートを取っている。<br />
+            <strong>あなたには、見えない。</strong>
           </p>
-          <div className="p-3 bg-white dark:bg-zinc-900 rounded-lg font-mono text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
-            &quot;{SRE_ENGLISH}&quot;
-          </div>
-          <button
-            type="button"
-            onClick={playEnglishBefore}
-            className="px-4 py-2 text-sm rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors"
-          >
-            {beforePlaying ? "⏹ 停止" : "🔊 英語読み上げを聴く（Before）"}
-          </button>
-          <p className="text-xs text-zinc-500">
-            ※ 日本の大学生がこの英語を聴いて「二次方程式の解の公式」と理解するのは困難です
+          <p className="text-sm text-zinc-500 leading-relaxed">
+            日本の大学には約1万人の視覚障碍のある学生がいます。
+            STEM分野の講義で数式が出てきたとき、彼らには「聞く」しか手段がありません。
+            しかし、既存のツールで数式を聞くとどうなるでしょうか？
           </p>
         </div>
       </section>
 
-      {/* Section 2: Gemini Extraction */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
-            2
-          </span>
-          解決: Geminiが講義資料を解析
+      {/* ── Section 2: Before ── */}
+      <section className="space-y-5">
+        <h2 className="text-xl font-bold">
+          Before: 既存の数式読み上げ
         </h2>
-        <div className="p-5 bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-900 space-y-4">
+
+        <div className="p-5 rounded-xl border border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20 space-y-4">
+          <p className="text-sm font-medium">二次方程式の解の公式を聞いてみてください:</p>
+          <div className="text-center text-lg py-3">
+            {`$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$`}
+          </div>
+
+          <div className="space-y-3">
+            <div className="p-3 bg-white dark:bg-zinc-900 rounded-lg space-y-2">
+              <p className="text-xs text-zinc-500 font-medium">英語ツール（MathCAT等）の読み上げ:</p>
+              <p className="font-mono text-xs text-zinc-500 leading-relaxed">
+                &quot;{SRE_ENGLISH}&quot;
+              </p>
+              <SpeechButton label="英語で聴く" text={SRE_ENGLISH} lang="en-US" />
+            </div>
+
+            <div className="p-3 bg-white dark:bg-zinc-900 rounded-lg space-y-2">
+              <p className="text-xs text-zinc-500 font-medium">仮に日本語に訳しても — 一方向に流れるだけ:</p>
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                &quot;{QUADRATIC_READING}&quot;
+              </p>
+              <SpeechButton label="日本語で聴く（線形）" text={QUADRATIC_READING} lang="ja-JP" />
+            </div>
+          </div>
+
+          <p className="text-sm text-zinc-500 leading-relaxed">
+            「分母なんだっけ？」と思っても、最初から全部聞き直すしかありません。
+            複雑な数式になるほど、一度聞いただけでは構造が頭に入りません。
+          </p>
+        </div>
+      </section>
+
+      {/* ── Section 3: After ── */}
+      <section className="space-y-5">
+        <h2 className="text-xl font-bold">
+          After: MathVoiceで数式を<em>辿る</em>
+        </h2>
+
+        <div className="p-5 rounded-xl border border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/20 space-y-4">
+          <p className="text-sm leading-relaxed">
+            同じ数式を、今度は<strong>キーボードで自由に辿って</strong>みてください。
+            分子だけ、分母だけ、ルートの中だけ — 見える人が目で数式を追うように、構造の中を移動できます。
+          </p>
+
+          <div className="p-3 bg-white/60 dark:bg-zinc-800/60 rounded-lg text-sm space-y-1">
+            <p className="font-medium">操作:</p>
+            <ol className="list-decimal list-inside space-y-0.5 text-zinc-600 dark:text-zinc-400">
+              <li>
+                下の数式に{" "}
+                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
+                  Tab
+                </kbd>{" "}
+                で移動
+              </li>
+              <li>
+                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
+                  Enter
+                </kbd>{" "}
+                で数式の中に入る
+              </li>
+              <li>
+                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
+                  ←
+                </kbd>{" "}
+                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
+                  →
+                </kbd>{" "}
+                で構造を辿る（日本語で読み上げ）
+              </li>
+              <li>
+                <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
+                  Esc
+                </kbd>{" "}
+                で戻る
+              </li>
+            </ol>
+          </div>
+
+          <section
+            ref={mathRef}
+            role="list"
+            aria-label="数式一覧"
+            className="space-y-5"
+          >
+            {DEMO_ENTRIES.map((entry, index) => (
+              <div
+                key={entry.id}
+                id={`entry-${entry.id}`}
+                role="listitem"
+                tabIndex={0}
+                aria-label={`${index + 1}番目: ${entry.description}`}
+                className="rounded-xl border border-zinc-200 dark:border-zinc-700 p-5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 scroll-mt-8 bg-white dark:bg-zinc-900"
+              >
+                <MathDisplay {...entry} />
+                {entry.type === "math" && (
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      className="px-3 py-2 text-sm rounded-md border border-[var(--surface-border)] hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      onClick={() => setTargetId(entry.id)}
+                    >
+                      この数式についてGeminiに質問
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </section>
+        </div>
+      </section>
+
+      {/* ── Section 4: OCRとの違い ── */}
+      <section className="space-y-4">
+        <h2 className="text-xl font-bold">
+          「GeminiにOCRさせて読めばいいのでは？」
+        </h2>
+        <div className="p-5 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-4">
+          <p className="text-sm leading-relaxed">
+            Geminiや他のAIで数式画像をOCRし、結果を読み上げることはできます。
+            しかしそれは<strong>「朗読」</strong>です。
+          </p>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 space-y-2">
+              <p className="font-semibold text-sm">OCR + 読み上げ</p>
+              <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-1">
+                <li>一方向に全部読む</li>
+                <li>「分母だけ聞きたい」→ 無理</li>
+                <li>入れ子が深いと構造を見失う</li>
+                <li>聞くだけ、質問できない</li>
+              </ul>
+            </div>
+            <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/30 space-y-2">
+              <p className="font-semibold text-sm">MathVoice</p>
+              <ul className="text-xs text-zinc-600 dark:text-zinc-400 space-y-1">
+                <li>矢印キーで構造の中を自由に移動</li>
+                <li>分子・分母・ルート内を個別に確認</li>
+                <li>階層を1つずつ降りて探索</li>
+                <li>Geminiに質問・要約もできる</li>
+              </ul>
+            </div>
+          </div>
+          <p className="text-sm text-zinc-500">
+            晴眼者が数式を「見る」とき、分母を見て、分子に戻って、ルートの中を確認して — 自由に視線を動かしています。
+            MathVoiceはそれをキーボードで再現します。OCRは一方向のテキスト化に留まります。
+          </p>
+        </div>
+      </section>
+
+      {/* ── Section 5: Gemini解析デモ ── */}
+      <section className="space-y-5">
+        <h2 className="text-xl font-bold">
+          Geminiによるリアルタイム解析
+        </h2>
+        <div className="p-5 rounded-xl border border-blue-200 dark:border-blue-900 bg-blue-50/50 dark:bg-blue-950/20 space-y-4">
           <p className="text-sm leading-relaxed">
             TAや友人が撮影した講義の板書を、Geminiがリアルタイムに解析。
-            LaTeX数式・説明文・読み上げテキストを自動生成します。
+            LaTeX数式・説明文・読み上げテキストを自動生成し、上で体験したインタラクティブな数式に変換します。
           </p>
           <div className="rounded-lg overflow-hidden border border-zinc-300 dark:border-zinc-600">
             <canvas
@@ -269,127 +429,38 @@ export default function DemoPage() {
               APIにアクセスできなかったため、プリセットの結果を表示しています
             </p>
           )}
-        </div>
-      </section>
 
-      {/* Section 3: Experience */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
-            3
-          </span>
-          体験: 日本語で数式を構造的に辿る
-        </h2>
-
-        <div className="p-4 bg-green-50 dark:bg-green-950/30 rounded-xl border border-green-200 dark:border-green-900 text-sm space-y-2">
-          <p className="font-semibold">操作方法</p>
-          <ol className="list-decimal list-inside space-y-1">
-            <li>
-              <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
-                Tab
-              </kbd>{" "}
-              で数式に移動
-            </li>
-            <li>
-              <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
-                Enter
-              </kbd>{" "}
-              で数式の中に入る
-            </li>
-            <li>
-              <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
-                ←
-              </kbd>{" "}
-              <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
-                →
-              </kbd>{" "}
-              で分子・分母・ルート内を辿る（日本語で読み上げ）
-            </li>
-            <li>
-              <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 text-xs font-mono">
-                Esc
-              </kbd>{" "}
-              で数式から出る
-            </li>
-          </ol>
-          <p className="text-xs text-zinc-500 mt-2">
-            🔊 ボタンでGemini TTSによる日本語読み上げも聴けます
-          </p>
-        </div>
-
-        <section
-          ref={extracted ? extractedRef : listRef}
-          role="list"
-          aria-label="数式一覧"
-          className="space-y-5"
-        >
-          {entries
-            .filter((e) => e.type === "math")
-            .map((entry, index) => (
-              <div
-                key={entry.id}
-                id={`entry-${entry.id}`}
-                role="listitem"
-                tabIndex={0}
-                aria-label={`${index + 1}番目: ${entry.description}`}
-                className="rounded-xl border border-zinc-200 dark:border-zinc-700 p-5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 scroll-mt-8"
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="w-7 h-7 rounded-full bg-green-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
-                    {index + 1}
-                  </span>
-                  <span className="text-xs text-zinc-500">数式</span>
+          {extracted && (
+            <section
+              ref={extractedRef}
+              role="list"
+              aria-label="解析結果"
+              className="space-y-4 pt-2"
+            >
+              {extracted.map((entry, index) => (
+                <div
+                  key={entry.id}
+                  id={`entry-${entry.id}`}
+                  role="listitem"
+                  tabIndex={0}
+                  aria-label={`解析結果${index + 1}: ${entry.description}`}
+                  className="rounded-xl border border-zinc-200 dark:border-zinc-700 p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 bg-white dark:bg-zinc-900"
+                >
+                  <MathDisplay {...entry} />
                 </div>
-                <MathDisplay {...entry} />
-                <div className="mt-3">
-                  <button
-                    type="button"
-                    className="px-3 py-2 text-sm rounded-md border border-[var(--surface-border)] hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    onClick={() => setTargetId(entry.id)}
-                  >
-                    この数式についてGeminiに質問
-                  </button>
-                </div>
-              </div>
-            ))}
-
-          {entries.some((e) => e.type === "graph") && (
-            <>
-              {entries
-                .filter((e) => e.type === "graph")
-                .map((entry, index) => (
-                  <div
-                    key={entry.id}
-                    id={`entry-${entry.id}`}
-                    role="listitem"
-                    tabIndex={0}
-                    aria-label={`グラフ: ${entry.description}`}
-                    className="rounded-xl border border-zinc-200 dark:border-zinc-700 p-5 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 scroll-mt-8"
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="w-7 h-7 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold shrink-0">
-                        ♪
-                      </span>
-                      <span className="text-xs text-zinc-500">グラフ（音響化）</span>
-                    </div>
-                    <MathDisplay {...entry} />
-                  </div>
-                ))}
-            </>
+              ))}
+            </section>
           )}
-        </section>
+        </div>
       </section>
 
-      {/* Section 4: Gemini Q&A */}
+      {/* ── Section 6: Gemini Q&A ── */}
       <section className="space-y-4">
-        <h2 className="text-xl font-bold flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
-            4
-          </span>
-          深掘り: Geminiに質問する
+        <h2 className="text-xl font-bold">
+          Geminiに質問する
         </h2>
         <p className="text-sm text-zinc-500">
-          抽出された数式についてGeminiに自由に質問できます。「この式の変数の意味は？」「式変形の手順を教えて」など。
+          数式の意味、式変形の手順、変数の意味など、Geminiに自由に質問できます。
         </p>
         <ContentAssistant
           key={target?.id ?? "demo"}
@@ -403,12 +474,12 @@ export default function DemoPage() {
         />
       </section>
 
-      {/* Tech Stack */}
+      {/* ── Tech Stack ── */}
       <section className="p-5 bg-zinc-50 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-3">
-        <h2 className="text-lg font-bold">使用したGoogle技術</h2>
+        <h2 className="text-lg font-bold">使用技術</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
           <div className="p-3 rounded-lg bg-white dark:bg-zinc-800 text-center">
-            <p className="font-semibold">Gemini 2.0</p>
+            <p className="font-semibold">Gemini</p>
             <p className="text-xs text-zinc-500">画像解析 + Q&amp;A</p>
           </div>
           <div className="p-3 rounded-lg bg-white dark:bg-zinc-800 text-center">
