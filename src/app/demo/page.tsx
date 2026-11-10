@@ -364,13 +364,23 @@ export default function DemoPage() {
         </p>
       </Narration>
 
-      {/* ── 共感 ── */}
+      {/* ── 問題定義 + 共感 ── */}
+      <Narration
+        speech="日本には約1400人の視覚障害のある大学生がいます。講義で板書される数式に、独力でアクセスする手段はほとんどありません。"
+        className="p-6 rounded-xl bg-zinc-100 dark:bg-zinc-900 space-y-5"
+      >
+        <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          日本には約1,400人の視覚障害のある大学生がいます。
+          講義で板書される数式に、独力でアクセスする手段はほとんどありません。
+        </p>
+      </Narration>
+
       <Narration
         speech={[
           "大学の講義。教授が黒板に数式を書く。周りの学生はノートを取っている。あなたには、見えない。",
-          "既存のツールで数式を聞くと、こう聞こえます。",
+          "友人に板書を撮影してもらい、OCRで読み上げさせても、数式を文字列としてそのまま読むだけ。分数の構造も、ルートの範囲も、聞いただけでは分かりません。",
         ]}
-        className="p-6 rounded-xl bg-zinc-100 dark:bg-zinc-900"
+        className="p-6 rounded-xl bg-zinc-100 dark:bg-zinc-900 space-y-4"
       >
         <p className="text-base leading-relaxed">
           大学の講義。教授が黒板に数式を書く。
@@ -379,8 +389,10 @@ export default function DemoPage() {
           <br />
           <strong>あなたには、見えない。</strong>
         </p>
-        <p className="text-sm text-zinc-500 mt-4 leading-relaxed">
-          既存のツールで数式を「聞く」と——
+        <p className="text-sm text-zinc-500 leading-relaxed">
+          友人に板書を撮影してもらい、OCRで読み上げさせても——
+          数式を文字列としてそのまま読むだけ。
+          分数の構造も、ルートの範囲も、聞いただけでは分かりません。
         </p>
       </Narration>
 
